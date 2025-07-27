@@ -216,11 +216,11 @@ public class WalaAnalyzer {
                 logger.warn("No main methods found as entry points");
             }
         } else {
-            System.out.println("Found " + entrypoints.size() + " entry point(s)");
-        for (Entrypoint entrypoint : entrypoints) {
-            IMethod method = entrypoint.getMethod();
-            System.out.println("Entry point: " + method.getDeclaringClass().getName() + "." + method.getName());
-        }
+            logger.info("Found {} entry point(s)", entrypoints.size());
+            for (Entrypoint entrypoint : entrypoints) {
+                IMethod method = entrypoint.getMethod();
+                logger.debug("Entry point: {}.{}", method.getDeclaringClass().getName(), method.getName());
+            }
         }
 
         return entrypoints;
@@ -368,8 +368,8 @@ public class WalaAnalyzer {
             });
         });
 
-        System.out.println("Total call graph nodes: " + callGraph.getNumberOfNodes());
-        System.out.println("Total call edges found: " + callEdges.size());
+        logger.debug("Total call graph nodes: {}", callGraph.getNumberOfNodes());
+        logger.debug("Total call edges found: {}", callEdges.size());
 
         return new AnalysisResult(classes, methods, callEdges);
     }
@@ -536,13 +536,13 @@ public class WalaAnalyzer {
         // For each original entry point, find interface calls and add implementations
         for (Entrypoint entrypoint : originalEntrypoints) {
             IMethod method = entrypoint.getMethod();
-            System.out.println("Analyzing entry point: " + method.getDeclaringClass().getName() + "." + method.getName());
+            logger.debug("Analyzing entry point: {}.{}", method.getDeclaringClass().getName(), method.getName());
             
             // Find interface types used in the method and add their implementations
             addImplementationsForInterfaces(classHierarchy, method, expandedEntrypoints, packageFilters);
         }
         
-        System.out.println("Expanded to " + expandedEntrypoints.size() + " total entry points");
+        logger.debug("Expanded to {} total entry points", expandedEntrypoints.size());
         return expandedEntrypoints;
     }
     
@@ -552,7 +552,7 @@ public class WalaAnalyzer {
             @Nonnull List<Entrypoint> entrypoints,
             @Nonnull List<String> packageFilters
     ) {
-        // Look for InvokerService interface specifically and add InvokerServiceImpl
+        // Find all interface implementations in the same package
         for (IClass clazz : classHierarchy) {
             String className = clazz.getName().toString();
             
@@ -561,18 +561,28 @@ public class WalaAnalyzer {
                 continue;
             }
             
-            // Check if this is InvokerServiceImpl
-            if (className.contains("InvokerServiceImpl")) {
-                System.out.println("Found implementation class: " + className);
+            // Check if this is a concrete implementation class (not interface, not abstract)
+            if (!clazz.isInterface() && !clazz.isAbstract()) {
+                // Check if this class implements any interfaces
+                boolean implementsInterface = false;
+                for (IClass interfaceClass : clazz.getDirectInterfaces()) {
+                    if (matchesPackageFilter(interfaceClass.getName().toString(), packageFilters)) {
+                        implementsInterface = true;
+                        logger.debug("Found implementation class: {} implements {}", className, interfaceClass.getName());
+                        break;
+                    }
+                }
                 
-                // Add all public methods of the implementation as entry points
-                for (IMethod implMethod : clazz.getDeclaredMethods()) {
-                    if (implMethod.isPublic() && !implMethod.isAbstract() && 
-                        !implMethod.isInit() && !implMethod.isClinit()) {
-                        
-                        Entrypoint newEntrypoint = new DefaultEntrypoint(implMethod, classHierarchy);
-                        entrypoints.add(newEntrypoint);
-                        System.out.println("Added implementation method: " + className + "." + implMethod.getName());
+                if (implementsInterface) {
+                    // Add all public methods of the implementation as entry points
+                    for (IMethod implMethod : clazz.getDeclaredMethods()) {
+                        if (implMethod.isPublic() && !implMethod.isAbstract() && 
+                            !implMethod.isInit() && !implMethod.isClinit()) {
+                            
+                            Entrypoint newEntrypoint = new DefaultEntrypoint(implMethod, classHierarchy);
+                            entrypoints.add(newEntrypoint);
+                            logger.debug("Added implementation method: {}.{}", className, implMethod.getName());
+                        }
                     }
                 }
             }
@@ -584,9 +594,9 @@ public class WalaAnalyzer {
             @Nonnull IClassHierarchy classHierarchy,
             @Nonnull List<String> packageFilters
     ) {
-        System.out.println("Adding interface implementations to analysis options...");
+        logger.debug("Adding interface implementations to analysis options...");
         
-        // Find InvokerService interface and its implementation
+        // Find all interfaces and their implementations in the package
         for (IClass clazz : classHierarchy) {
             String className = clazz.getName().toString();
             
@@ -594,14 +604,15 @@ public class WalaAnalyzer {
                 continue;
             }
             
-            // Check if this is InvokerService interface
-            if (className.contains("InvokerService") && clazz.isInterface()) {
-                System.out.println("Found interface: " + className);
+            // Check if this is an interface
+            if (clazz.isInterface()) {
+                logger.debug("Found interface: {}", className);
                 
                 // Find all implementations of this interface
                 for (IClass implClass : classHierarchy) {
-                    if (classHierarchy.implementsInterface(implClass, clazz)) {
-                        System.out.println("Found implementation: " + implClass.getName() + " implements " + className);
+                    if (matchesPackageFilter(implClass.getName().toString(), packageFilters) &&
+                        classHierarchy.implementsInterface(implClass, clazz)) {
+                        logger.debug("Found implementation: {} implements {}", implClass.getName(), className);
                         
                         // Add mapping for interface call resolution
                         // This helps WALA understand that interface calls should resolve to implementation
