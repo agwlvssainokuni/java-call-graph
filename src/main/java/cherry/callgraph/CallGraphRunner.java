@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -106,10 +107,23 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         var outputFile = getOptionValue(args, "output", null);
         var formatStr = getOptionValue(args, "format", "txt");
         var format = parseOutputFormat(formatStr);
+        
+        // Parse package filters
+        var packageFilters = parsePackageFilters(args);
+        if (!quiet && !packageFilters.isEmpty()) {
+            logger.info("Package filters: {}", String.join(", ", packageFilters));
+        }
+        
+        // Parse algorithm
+        var algorithmStr = getOptionValue(args, "algorithm", "cha");
+        var algorithm = parseAlgorithm(algorithmStr);
+        if (!quiet) {
+            logger.info("Analysis algorithm: {}", algorithm);
+        }
 
         // Perform WALA analysis
         try {
-            var result = walaAnalyzer.analyzeFiles(files, verbose);
+            var result = walaAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm);
             
             // Write output in specified format
             if (outputFile != null || format != OutputFormatter.Format.TXT) {
@@ -231,6 +245,41 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
             default -> {
                 logger.warn("Unknown output format '{}', using TXT format", formatStr);
                 yield OutputFormatter.Format.TXT;
+            }
+        };
+    }
+
+    @Nonnull
+    private List<String> parsePackageFilters(@Nonnull ApplicationArguments args) {
+        var packageOptions = args.getOptionValues("package");
+        if (packageOptions == null || packageOptions.isEmpty()) {
+            return List.of();
+        }
+        
+        List<String> filters = new ArrayList<>();
+        for (String packageOption : packageOptions) {
+            // Split by comma to support multiple packages in one option
+            String[] packages = packageOption.split(",");
+            for (String pkg : packages) {
+                String trimmed = pkg.trim();
+                if (!trimmed.isEmpty()) {
+                    filters.add(trimmed);
+                }
+            }
+        }
+        
+        return filters;
+    }
+
+    @Nonnull
+    private WalaAnalyzer.Algorithm parseAlgorithm(@Nonnull String algorithmStr) {
+        return switch (algorithmStr.toLowerCase()) {
+            case "cha" -> WalaAnalyzer.Algorithm.CHA;
+            case "rta" -> WalaAnalyzer.Algorithm.RTA;
+            case "0cfa", "zero-cfa", "zerocfa" -> WalaAnalyzer.Algorithm.ZERO_CFA;
+            default -> {
+                logger.warn("Unknown algorithm '{}', using CHA", algorithmStr);
+                yield WalaAnalyzer.Algorithm.CHA;
             }
         };
     }
