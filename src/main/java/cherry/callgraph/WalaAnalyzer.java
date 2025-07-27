@@ -58,7 +58,7 @@ public class WalaAnalyzer {
         logger.info("Initializing WALA analysis for {} files", filePaths.size());
 
         // Create analysis scope
-        AnalysisScope scope = createAnalysisScope(verbose);
+        AnalysisScope scope = createAnalysisScope();
 
         // Add input files to scope
         for (String filePath : filePaths) {
@@ -414,25 +414,10 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    private AnalysisScope createAnalysisScope(boolean verbose) throws IOException {
-        // Create primordial scope with standard Java libraries
-        AnalysisScope scope = AnalysisScopeReader.instance.makePrimordialScope(
+    private AnalysisScope createAnalysisScope() throws IOException {
+        return AnalysisScopeReader.instance.makePrimordialScope(
                 new FileProvider().getFile("Java60RegressionExclusions.txt")
         );
-        
-        // Detect if running from Spring Boot executable JAR
-        String classPath = System.getProperty("java.class.path");
-        if (verbose) {
-            logger.debug("Java classpath: {}", classPath);
-        }
-        
-        // Note: We will add input files separately via addFileToScope() method
-        // This ensures only user-specified files are analyzed, not the application itself
-        if (verbose) {
-            logger.debug("Analysis scope will be populated with user-specified input files only");
-        }
-        
-        return scope;
     }
     
     @Nonnull
