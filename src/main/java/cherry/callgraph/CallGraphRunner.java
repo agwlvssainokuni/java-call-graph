@@ -111,8 +111,9 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         } catch (Exception e) {
             if (!quiet) {
                 logger.error("WALA analysis failed: {}", e.getMessage());
+                logger.error("Exception type: {}", e.getClass().getSimpleName());
                 if (verbose) {
-                    logger.debug("Stack trace:", e);
+                    logger.error("Stack trace:", e);
                 }
             }
             throw new RuntimeException("WALA analysis failed", e);

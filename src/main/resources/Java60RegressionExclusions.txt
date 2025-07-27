@@ -1,0 +1,6 @@
+# WALA exclusions for common system libraries
+java\/awt\/.*
+javax\/swing\/.*
+sun\/.*
+com\/sun\/.*
+jdk\/.*

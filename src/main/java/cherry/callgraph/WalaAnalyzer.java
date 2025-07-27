@@ -20,10 +20,12 @@ import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
+import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.cha.ClassHierarchyFactory;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
-import com.ibm.wala.util.config.AnalysisScopeReader;
-import com.ibm.wala.util.io.FileProvider;
+import com.ibm.wala.shrike.shrikeCT.InvalidClassFileException;
+import com.ibm.wala.core.util.config.AnalysisScopeReader;
+import com.ibm.wala.core.util.io.FileProvider;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.jar.JarFile;
 
 @Component
 public class WalaAnalyzer {
@@ -44,7 +47,7 @@ public class WalaAnalyzer {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Nonnull
-    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose) throws IOException {
+    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose) throws IOException, ClassHierarchyException {
         logger.info("Initializing WALA analysis for {} files", filePaths.size());
 
         // Create analysis scope
@@ -92,28 +95,46 @@ public class WalaAnalyzer {
             if (verbose) {
                 logger.debug("Adding directory to scope: {}", filePath);
             }
-            scope.addToScope(
-                    scope.getApplicationLoader(),
-                    file
-            );
+            // Find all .class files in directory and subdirectories
+            Files.walk(path)
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.toString().toLowerCase().endsWith(".class"))
+                    .forEach(classPath -> {
+                        try {
+                            scope.addClassFileToScope(
+                                    scope.getApplicationLoader(),
+                                    classPath.toFile()
+                            );
+                            if (verbose) {
+                                logger.debug("  Added class file: {}", classPath);
+                            }
+                        } catch (InvalidClassFileException e) {
+                            logger.warn("Failed to add class file to scope: {} - {}", classPath, e.getMessage());
+                        }
+                    });
         } else if (Files.isRegularFile(path)) {
             String fileName = path.getFileName().toString().toLowerCase();
             if (fileName.endsWith(".jar") || fileName.endsWith(".war")) {
                 if (verbose) {
                     logger.debug("Adding JAR/WAR to scope: {}", filePath);
                 }
+                JarFile jarFile = new JarFile(file);
                 scope.addToScope(
                         scope.getApplicationLoader(),
-                        file
+                        jarFile
                 );
             } else if (fileName.endsWith(".class")) {
                 if (verbose) {
                     logger.debug("Adding class file to scope: {}", filePath);
                 }
-                scope.addToScope(
-                        scope.getApplicationLoader(),
-                        file
-                );
+                try {
+                    scope.addClassFileToScope(
+                            scope.getApplicationLoader(),
+                            file
+                    );
+                } catch (InvalidClassFileException e) {
+                    logger.warn("Failed to add class file to scope: {} - {}", filePath, e.getMessage());
+                }
             }
         }
     }
