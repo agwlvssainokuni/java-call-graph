@@ -22,7 +22,6 @@ import com.ibm.wala.classLoader.Language;
 import com.ibm.wala.core.util.config.AnalysisScopeReader;
 import com.ibm.wala.core.util.io.FileProvider;
 import com.ibm.wala.ipa.callgraph.*;
-import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
 import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
@@ -80,7 +79,7 @@ public class WalaAnalyzer {
         // Find entry points (main methods or custom specified)
         logger.info("Finding entry points...");
         Iterable<Entrypoint> entrypoints = findEntryPoints(classHierarchy, verbose, customEntryPoints);
-        
+
         // Add interface implementations as additional entry points to help resolve interface calls
         entrypoints = expandEntryPointsWithImplementations(classHierarchy, entrypoints, packageFilters);
 
@@ -172,7 +171,7 @@ public class WalaAnalyzer {
                 for (IMethod method : foundMethods) {
                     entrypoints.add(new DefaultEntrypoint(method, classHierarchy));
                     if (verbose) {
-                        logger.info("Found custom entry point: {}.{}", 
+                        logger.info("Found custom entry point: {}.{}",
                                 method.getDeclaringClass().getName(), method.getName());
                     }
                 }
@@ -223,11 +222,11 @@ public class WalaAnalyzer {
     @Nonnull
     private List<IMethod> findMethodsBySpec(@Nonnull IClassHierarchy classHierarchy, @Nonnull String entryPointSpec) {
         List<IMethod> foundMethods = new ArrayList<>();
-        
+
         // Parse entry point specification: ClassName.methodName or just methodName
         String className = null;
         String methodName;
-        
+
         if (entryPointSpec.contains(".")) {
             int lastDot = entryPointSpec.lastIndexOf(".");
             className = entryPointSpec.substring(0, lastDot);
@@ -235,7 +234,8 @@ public class WalaAnalyzer {
         } else {
             methodName = entryPointSpec;
         }
-        
+
+
         for (IClass clazz : classHierarchy) {
             // Skip system classes
             if (clazz.getName().toString().startsWith("Ljava/") ||
@@ -244,7 +244,7 @@ public class WalaAnalyzer {
                     clazz.getName().toString().startsWith("Ljavax/")) {
                 continue;
             }
-            
+
             // Check class name if specified
             if (className != null) {
                 String actualClassName = clazz.getName().toString();
@@ -255,12 +255,12 @@ public class WalaAnalyzer {
                     }
                 }
                 actualClassName = actualClassName.replace("/", ".");
-                
+
                 if (!actualClassName.equals(className) && !actualClassName.endsWith("." + className)) {
                     continue;
                 }
             }
-            
+
             // Look for matching methods
             for (IMethod method : clazz.getDeclaredMethods()) {
                 if (method.getName().toString().equals(methodName)) {
@@ -268,7 +268,7 @@ public class WalaAnalyzer {
                 }
             }
         }
-        
+
         return foundMethods;
     }
 
@@ -292,7 +292,7 @@ public class WalaAnalyzer {
             }
 
             String className = clazz.getName().toString();
-            
+
             // Apply package filtering
             if (!matchesPackageFilter(className, packageFilters)) {
                 if (verbose && !packageFilters.isEmpty()) {
@@ -300,7 +300,7 @@ public class WalaAnalyzer {
                 }
                 continue;
             }
-            
+
             if (verbose) {
                 logger.debug("Processing class: {}", className);
             }
@@ -332,7 +332,7 @@ public class WalaAnalyzer {
             if (excludeJdk && isJdkClass(callerClass)) {
                 return;
             }
-            
+
             // Apply package filtering to caller
             if (!matchesPackageFilter(callerClass, packageFilters)) {
                 return;
@@ -372,7 +372,7 @@ public class WalaAnalyzer {
         if (packageFilters.isEmpty()) {
             return true;
         }
-        
+
         // Convert WALA class name format (Lcom/example/Class;) to package format
         String packageName = className;
         if (packageName.startsWith("L")) {
@@ -382,7 +382,7 @@ public class WalaAnalyzer {
             }
         }
         packageName = packageName.replace("/", ".");
-        
+
         // Extract package part (remove class name)
         int lastDot = packageName.lastIndexOf(".");
         if (lastDot > 0) {
@@ -391,7 +391,7 @@ public class WalaAnalyzer {
             // If no package (default package), set to empty string
             packageName = "";
         }
-        
+
         // Check if package matches any filter
         for (String filter : packageFilters) {
             if (packageName.startsWith(filter)) {
@@ -403,14 +403,14 @@ public class WalaAnalyzer {
 
     private boolean isJdkClass(@Nonnull String className) {
         return className.startsWith("Ljava/") ||
-               className.startsWith("Lsun/") ||
-               className.startsWith("Lcom/sun/") ||
-               className.startsWith("Ljavax/") ||
-               className.startsWith("Ljdk/") ||
-               className.startsWith("Lcom/oracle/") ||
-               className.startsWith("Lorg/w3c/") ||
-               className.startsWith("Lorg/xml/") ||
-               className.startsWith("Lorg/ietf/");
+                className.startsWith("Lsun/") ||
+                className.startsWith("Lcom/sun/") ||
+                className.startsWith("Ljavax/") ||
+                className.startsWith("Ljdk/") ||
+                className.startsWith("Lcom/oracle/") ||
+                className.startsWith("Lorg/w3c/") ||
+                className.startsWith("Lorg/xml/") ||
+                className.startsWith("Lorg/ietf/");
     }
 
     @Nonnull
@@ -419,31 +419,31 @@ public class WalaAnalyzer {
                 new FileProvider().getFile("Java60RegressionExclusions.txt")
         );
     }
-    
+
     @Nonnull
     private Iterable<Entrypoint> expandEntryPointsWithImplementations(
-            @Nonnull IClassHierarchy classHierarchy, 
+            @Nonnull IClassHierarchy classHierarchy,
             @Nonnull Iterable<Entrypoint> originalEntrypoints,
             @Nonnull List<String> packageFilters
     ) {
         List<Entrypoint> expandedEntrypoints = new ArrayList<>();
-        
+
         // Add original entry points
         originalEntrypoints.forEach(expandedEntrypoints::add);
-        
+
         // For each original entry point, find interface calls and add implementations
         for (Entrypoint entrypoint : originalEntrypoints) {
             IMethod method = entrypoint.getMethod();
             logger.debug("Analyzing entry point: {}.{}", method.getDeclaringClass().getName(), method.getName());
-            
+
             // Find interface types used in the method and add their implementations
             addImplementationsForInterfaces(classHierarchy, method, expandedEntrypoints, packageFilters);
         }
-        
+
         logger.debug("Expanded to {} total entry points", expandedEntrypoints.size());
         return expandedEntrypoints;
     }
-    
+
     private void addImplementationsForInterfaces(
             @Nonnull IClassHierarchy classHierarchy,
             @Nonnull IMethod method,
@@ -453,12 +453,12 @@ public class WalaAnalyzer {
         // Find all interface implementations in the same package
         for (IClass clazz : classHierarchy) {
             String className = clazz.getName().toString();
-            
+
             // Skip system classes and classes not matching package filter
             if (!matchesPackageFilter(className, packageFilters)) {
                 continue;
             }
-            
+
             // Check if this is a concrete implementation class (not interface, not abstract)
             if (!clazz.isInterface() && !clazz.isAbstract()) {
                 // Check if this class implements any interfaces
@@ -470,13 +470,13 @@ public class WalaAnalyzer {
                         break;
                     }
                 }
-                
+
                 if (implementsInterface) {
                     // Add all public methods of the implementation as entry points
                     for (IMethod implMethod : clazz.getDeclaredMethods()) {
-                        if (implMethod.isPublic() && !implMethod.isAbstract() && 
-                            !implMethod.isInit() && !implMethod.isClinit()) {
-                            
+                        if (implMethod.isPublic() && !implMethod.isAbstract() &&
+                                !implMethod.isInit() && !implMethod.isClinit()) {
+
                             Entrypoint newEntrypoint = new DefaultEntrypoint(implMethod, classHierarchy);
                             entrypoints.add(newEntrypoint);
                             logger.debug("Added implementation method: {}.{}", className, implMethod.getName());
