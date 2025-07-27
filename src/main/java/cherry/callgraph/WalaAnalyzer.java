@@ -36,11 +36,13 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 @Component
@@ -57,11 +59,7 @@ public class WalaAnalyzer {
         logger.info("Initializing WALA analysis for {} files", filePaths.size());
 
         // Create analysis scope
-        var scope = AnalysisScopeReader.instance.readJavaScope(
-                "scope.txt",
-                new FileProvider().getFile("Java60RegressionExclusions.txt"),
-                WalaAnalyzer.class.getClassLoader()
-        );
+        AnalysisScope scope = createAnalysisScope(verbose);
 
         // Add input files to scope
         for (String filePath : filePaths) {
@@ -396,6 +394,126 @@ public class WalaAnalyzer {
                className.startsWith("Lorg/w3c/") ||
                className.startsWith("Lorg/xml/") ||
                className.startsWith("Lorg/ietf/");
+    }
+
+    @Nonnull
+    private AnalysisScope createAnalysisScope(boolean verbose) throws IOException {
+        // Create primordial scope with standard Java libraries
+        AnalysisScope scope = AnalysisScopeReader.instance.makePrimordialScope(
+                new FileProvider().getFile("Java60RegressionExclusions.txt")
+        );
+        
+        // Detect if running from Spring Boot executable JAR
+        String classPath = System.getProperty("java.class.path");
+        if (verbose) {
+            logger.debug("Java classpath: {}", classPath);
+        }
+        
+        if (isRunningFromSpringBootJar(classPath)) {
+            if (verbose) {
+                logger.info("Detected Spring Boot executable JAR, extracting classes for WALA analysis");
+            }
+            Path extractedPath = extractSpringBootJarClasses(classPath, verbose);
+            scope.addToScope(
+                scope.getApplicationLoader(),
+                new com.ibm.wala.classLoader.BinaryDirectoryTreeModule(extractedPath.toFile())
+            );
+        } else {
+            // Running from IDE or extracted classes - use current directory
+            if (verbose) {
+                logger.debug("Using current directory for WALA scope");
+            }
+            File currentDir = new File(".");
+            if (currentDir.exists()) {
+                scope.addToScope(
+                    scope.getApplicationLoader(),
+                    new com.ibm.wala.classLoader.BinaryDirectoryTreeModule(currentDir)
+                );
+            }
+        }
+        
+        return scope;
+    }
+    
+    private boolean isRunningFromSpringBootJar(@Nonnull String classPath) {
+        if (!classPath.endsWith(".jar")) {
+            return false;
+        }
+        
+        try (JarFile jarFile = new JarFile(classPath)) {
+            return jarFile.getEntry("BOOT-INF/") != null;
+        } catch (IOException e) {
+            logger.warn("Could not check if JAR is Spring Boot format: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    @Nonnull
+    private Path extractSpringBootJarClasses(@Nonnull String jarPath, boolean verbose) throws IOException {
+        Path tempDir = Files.createTempDirectory("wala-spring-boot-");
+        if (verbose) {
+            logger.info("Extracting Spring Boot JAR classes to: {}", tempDir);
+        }
+        
+        try (JarFile jarFile = new JarFile(jarPath)) {
+            jarFile.stream()
+                .filter(entry -> entry.getName().startsWith("BOOT-INF/classes/"))
+                .filter(entry -> !entry.isDirectory())
+                .filter(entry -> entry.getName().endsWith(".class"))
+                .forEach(entry -> {
+                    try {
+                        extractJarEntry(jarFile, entry, tempDir, verbose);
+                    } catch (IOException e) {
+                        logger.warn("Failed to extract {}: {}", entry.getName(), e.getMessage());
+                    }
+                });
+        }
+        
+        // Register shutdown hook to clean up temporary directory
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                deleteRecursively(tempDir);
+                if (verbose) {
+                    logger.debug("Cleaned up temporary directory: {}", tempDir);
+                }
+            } catch (IOException e) {
+                logger.warn("Failed to clean up temporary directory {}: {}", tempDir, e.getMessage());
+            }
+        }));
+        
+        return tempDir;
+    }
+    
+    private void extractJarEntry(@Nonnull JarFile jarFile, @Nonnull JarEntry entry, @Nonnull Path tempDir, boolean verbose) throws IOException {
+        // Remove "BOOT-INF/classes/" prefix to get the relative class path
+        String relativePath = entry.getName().substring("BOOT-INF/classes/".length());
+        Path targetPath = tempDir.resolve(relativePath);
+        
+        // Create parent directories
+        Files.createDirectories(targetPath.getParent());
+        
+        // Extract the file
+        try (InputStream inputStream = jarFile.getInputStream(entry)) {
+            Files.copy(inputStream, targetPath);
+            if (verbose) {
+                logger.debug("Extracted: {} -> {}", entry.getName(), targetPath);
+            }
+        }
+    }
+    
+    private void deleteRecursively(@Nonnull Path path) throws IOException {
+        if (Files.isDirectory(path)) {
+            try (var stream = Files.list(path)) {
+                stream.forEach(child -> {
+                    try {
+                        deleteRecursively(child);
+                    } catch (IOException e) {
+                        logger.warn("Failed to delete {}: {}", child, e.getMessage());
+                    }
+                });
+            }
+        }
+        Files.deleteIfExists(path);
     }
 
     @Nonnull
