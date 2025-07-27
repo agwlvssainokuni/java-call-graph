@@ -53,7 +53,7 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose, @Nonnull List<String> packageFilters, @Nonnull Algorithm algorithm) throws IOException, ClassHierarchyException, CallGraphBuilderCancelException {
+    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose, @Nonnull List<String> packageFilters, @Nonnull Algorithm algorithm, @Nonnull List<String> customEntryPoints) throws IOException, ClassHierarchyException, CallGraphBuilderCancelException {
         logger.info("Initializing WALA analysis for {} files", filePaths.size());
 
         // Create analysis scope
@@ -80,9 +80,9 @@ public class WalaAnalyzer {
             logger.info("Class hierarchy built with {} classes", classHierarchy.getNumberOfClasses());
         }
 
-        // Find entry points (main methods)
+        // Find entry points (main methods or custom specified)
         logger.info("Finding entry points...");
-        Iterable<Entrypoint> entrypoints = findEntryPoints(classHierarchy, verbose);
+        Iterable<Entrypoint> entrypoints = findEntryPoints(classHierarchy, verbose, customEntryPoints);
 
         // Build call graph using specified algorithm
         logger.info("Building call graph with {}...", algorithm);
@@ -162,9 +162,76 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    private Iterable<Entrypoint> findEntryPoints(@Nonnull IClassHierarchy classHierarchy, boolean verbose) {
+    private Iterable<Entrypoint> findEntryPoints(@Nonnull IClassHierarchy classHierarchy, boolean verbose, @Nonnull List<String> customEntryPoints) {
         List<Entrypoint> entrypoints = new ArrayList<>();
 
+        if (!customEntryPoints.isEmpty()) {
+            // Use custom entry points
+            for (String entryPointSpec : customEntryPoints) {
+                var foundMethods = findMethodsBySpec(classHierarchy, entryPointSpec);
+                for (IMethod method : foundMethods) {
+                    entrypoints.add(new DefaultEntrypoint(method, classHierarchy));
+                    if (verbose) {
+                        logger.info("Found custom entry point: {}.{}", 
+                                method.getDeclaringClass().getName(), method.getName());
+                    }
+                }
+            }
+        } else {
+            // Use default main method discovery
+            for (IClass clazz : classHierarchy) {
+                // Skip system classes
+                if (clazz.getName().toString().startsWith("Ljava/") ||
+                        clazz.getName().toString().startsWith("Lsun/") ||
+                        clazz.getName().toString().startsWith("Lcom/sun/") ||
+                        clazz.getName().toString().startsWith("Ljavax/")) {
+                    continue;
+                }
+
+                // Look for main methods
+                for (IMethod method : clazz.getDeclaredMethods()) {
+                    if (method.getName().toString().equals("main") &&
+                            method.isStatic() &&
+                            method.isPublic()) {
+
+                        entrypoints.add(new DefaultEntrypoint(method, classHierarchy));
+                        if (verbose) {
+                            logger.info("Found entry point: {}.main", clazz.getName());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (entrypoints.isEmpty()) {
+            if (!customEntryPoints.isEmpty()) {
+                logger.warn("No custom entry points found matching: {}", String.join(", ", customEntryPoints));
+            } else {
+                logger.warn("No main methods found as entry points");
+            }
+        } else {
+            logger.info("Found {} entry point(s)", entrypoints.size());
+        }
+
+        return entrypoints;
+    }
+
+    @Nonnull
+    private List<IMethod> findMethodsBySpec(@Nonnull IClassHierarchy classHierarchy, @Nonnull String entryPointSpec) {
+        List<IMethod> foundMethods = new ArrayList<>();
+        
+        // Parse entry point specification: ClassName.methodName or just methodName
+        String className = null;
+        String methodName;
+        
+        if (entryPointSpec.contains(".")) {
+            int lastDot = entryPointSpec.lastIndexOf(".");
+            className = entryPointSpec.substring(0, lastDot);
+            methodName = entryPointSpec.substring(lastDot + 1);
+        } else {
+            methodName = entryPointSpec;
+        }
+        
         for (IClass clazz : classHierarchy) {
             // Skip system classes
             if (clazz.getName().toString().startsWith("Ljava/") ||
@@ -173,28 +240,29 @@ public class WalaAnalyzer {
                     clazz.getName().toString().startsWith("Ljavax/")) {
                 continue;
             }
-
-            // Look for main methods
+            
+            // Check class name if specified
+            if (className != null) {
+                String actualClassName = clazz.getName().toString();
+                if (actualClassName.startsWith("L") && actualClassName.endsWith(";")) {
+                    actualClassName = actualClassName.substring(1, actualClassName.length() - 1);
+                }
+                actualClassName = actualClassName.replace("/", ".");
+                
+                if (!actualClassName.equals(className) && !actualClassName.endsWith("." + className)) {
+                    continue;
+                }
+            }
+            
+            // Look for matching methods
             for (IMethod method : clazz.getDeclaredMethods()) {
-                if (method.getName().toString().equals("main") &&
-                        method.isStatic() &&
-                        method.isPublic()) {
-
-                    entrypoints.add(new DefaultEntrypoint(method, classHierarchy));
-                    if (verbose) {
-                        logger.info("Found entry point: {}.main", clazz.getName());
-                    }
+                if (method.getName().toString().equals(methodName)) {
+                    foundMethods.add(method);
                 }
             }
         }
-
-        if (entrypoints.isEmpty()) {
-            logger.warn("No main methods found as entry points");
-        } else {
-            logger.info("Found {} entry point(s)", entrypoints.size());
-        }
-
-        return entrypoints;
+        
+        return foundMethods;
     }
 
     @Nonnull

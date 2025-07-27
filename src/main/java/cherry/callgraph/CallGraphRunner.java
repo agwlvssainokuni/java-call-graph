@@ -120,10 +120,16 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         if (!quiet) {
             logger.info("Analysis algorithm: {}", algorithm);
         }
+        
+        // Parse custom entry points
+        var customEntryPoints = parseEntryPoints(args);
+        if (!quiet && !customEntryPoints.isEmpty()) {
+            logger.info("Custom entry points: {}", String.join(", ", customEntryPoints));
+        }
 
         // Perform WALA analysis
         try {
-            var result = walaAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm);
+            var result = walaAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm, customEntryPoints);
             
             // Write output in specified format
             if (outputFile != null || format != OutputFormatter.Format.TXT) {
@@ -282,5 +288,27 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
                 yield WalaAnalyzer.Algorithm.CHA;
             }
         };
+    }
+
+    @Nonnull
+    private List<String> parseEntryPoints(@Nonnull ApplicationArguments args) {
+        var entryOptions = args.getOptionValues("entry");
+        if (entryOptions == null || entryOptions.isEmpty()) {
+            return List.of();
+        }
+        
+        List<String> entryPoints = new ArrayList<>();
+        for (String entryOption : entryOptions) {
+            // Split by comma to support multiple entry points in one option
+            String[] entries = entryOption.split(",");
+            for (String entry : entries) {
+                String trimmed = entry.trim();
+                if (!trimmed.isEmpty()) {
+                    entryPoints.add(trimmed);
+                }
+            }
+        }
+        
+        return entryPoints;
     }
 }
