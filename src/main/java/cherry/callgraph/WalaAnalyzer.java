@@ -53,7 +53,7 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose, @Nonnull List<String> packageFilters, @Nonnull Algorithm algorithm, @Nonnull List<String> customEntryPoints) throws IOException, ClassHierarchyException, CallGraphBuilderCancelException {
+    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose, @Nonnull List<String> packageFilters, @Nonnull Algorithm algorithm, @Nonnull List<String> customEntryPoints, boolean excludeJdk) throws IOException, ClassHierarchyException, CallGraphBuilderCancelException {
         logger.info("Initializing WALA analysis for {} files", filePaths.size());
 
         // Create analysis scope
@@ -96,7 +96,7 @@ public class WalaAnalyzer {
         }
 
         // Collect classes, methods, and call graph information
-        var result = collectAnalysisResults(classHierarchy, callGraph, verbose, packageFilters);
+        var result = collectAnalysisResults(classHierarchy, callGraph, verbose, packageFilters, excludeJdk);
 
         logger.info("Analysis completed: {} classes, {} methods, {} call edges found",
                 result.classes().size(), result.methods().size(), result.callEdges().size());
@@ -270,7 +270,8 @@ public class WalaAnalyzer {
             @Nonnull IClassHierarchy classHierarchy,
             @Nonnull CallGraph callGraph,
             boolean verbose,
-            @Nonnull List<String> packageFilters
+            @Nonnull List<String> packageFilters,
+            boolean excludeJdk
     ) {
         List<ClassInfo> classes = new ArrayList<>();
         List<MethodInfo> methods = new ArrayList<>();
@@ -278,11 +279,8 @@ public class WalaAnalyzer {
 
         // Collect classes and methods
         for (IClass clazz : classHierarchy) {
-            // Skip system classes
-            if (clazz.getName().toString().startsWith("Ljava/") ||
-                    clazz.getName().toString().startsWith("Lsun/") ||
-                    clazz.getName().toString().startsWith("Lcom/sun/") ||
-                    clazz.getName().toString().startsWith("Ljavax/")) {
+            // Skip system classes if excludeJdk is enabled
+            if (excludeJdk && isJdkClass(clazz.getName().toString())) {
                 continue;
             }
 
@@ -323,11 +321,8 @@ public class WalaAnalyzer {
             String callerClass = method.getDeclaringClass().getName().toString();
             String callerMethod = method.getName().toString();
 
-            // Skip system classes in call edges
-            if (callerClass.startsWith("Ljava/") ||
-                    callerClass.startsWith("Lsun/") ||
-                    callerClass.startsWith("Lcom/sun/") ||
-                    callerClass.startsWith("Ljavax/")) {
+            // Skip system classes in call edges if excludeJdk is enabled
+            if (excludeJdk && isJdkClass(callerClass)) {
                 return;
             }
             
@@ -341,11 +336,8 @@ public class WalaAnalyzer {
                 String targetClass = targetMethod.getDeclaringClass().getName().toString();
                 String targetMethodName = targetMethod.getName().toString();
 
-                // Skip system classes in targets too
-                if (!targetClass.startsWith("Ljava/") &&
-                        !targetClass.startsWith("Lsun/") &&
-                        !targetClass.startsWith("Lcom/sun/") &&
-                        !targetClass.startsWith("Ljavax/") &&
+                // Skip system classes in targets if excludeJdk is enabled
+                if ((!excludeJdk || !isJdkClass(targetClass)) &&
                         matchesPackageFilter(targetClass, packageFilters)) {
 
                     callEdges.add(new CallEdgeInfo(
@@ -392,6 +384,18 @@ public class WalaAnalyzer {
         }
         
         return false;
+    }
+
+    private boolean isJdkClass(@Nonnull String className) {
+        return className.startsWith("Ljava/") ||
+               className.startsWith("Lsun/") ||
+               className.startsWith("Lcom/sun/") ||
+               className.startsWith("Ljavax/") ||
+               className.startsWith("Ljdk/") ||
+               className.startsWith("Lcom/oracle/") ||
+               className.startsWith("Lorg/w3c/") ||
+               className.startsWith("Lorg/xml/") ||
+               className.startsWith("Lorg/ietf/");
     }
 
     @Nonnull

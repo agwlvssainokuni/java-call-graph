@@ -127,9 +127,15 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
             logger.info("Custom entry points: {}", String.join(", ", customEntryPoints));
         }
 
+        // Parse JDK exclusion option
+        var excludeJdk = args.containsOption("exclude-jdk");
+        if (!quiet && excludeJdk) {
+            logger.info("JDK classes will be excluded from analysis");
+        }
+
         // Perform WALA analysis
         try {
-            var result = walaAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm, customEntryPoints);
+            var result = walaAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm, customEntryPoints, excludeJdk);
             
             // Write output in specified format
             if (outputFile != null || format != OutputFormatter.Format.TXT) {
