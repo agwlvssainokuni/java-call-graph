@@ -34,10 +34,12 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final WalaAnalyzer walaAnalyzer;
+    private final OutputFormatter outputFormatter;
     private int exitCode = 0;
 
-    public CallGraphRunner(WalaAnalyzer walaAnalyzer) {
+    public CallGraphRunner(WalaAnalyzer walaAnalyzer, OutputFormatter outputFormatter) {
         this.walaAnalyzer = walaAnalyzer;
+        this.outputFormatter = outputFormatter;
     }
 
     @Override
@@ -100,11 +102,22 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
             }
         }
 
+        // Parse output options
+        var outputFile = getOptionValue(args, "output");
+        var formatStr = getOptionValue(args, "format", "txt");
+        var format = parseOutputFormat(formatStr);
+
         // Perform WALA analysis
         try {
             var result = walaAnalyzer.analyzeFiles(files, verbose);
             
-            if (!quiet) {
+            // Write output in specified format
+            if (outputFile != null || format != OutputFormatter.Format.TXT) {
+                outputFormatter.writeOutput(result, format, outputFile, verbose);
+                if (!quiet && outputFile != null) {
+                    logger.info("Output written to: {}", outputFile);
+                }
+            } else if (!quiet) {
                 displayResults(result, verbose);
             }
             
@@ -203,5 +216,27 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
                 logger.info("  {}", classInfo.name());
             }
         }
+    }
+
+    private String getOptionValue(@Nonnull ApplicationArguments args, @Nonnull String option) {
+        var values = args.getOptionValues(option);
+        return values != null && !values.isEmpty() ? values.get(0) : null;
+    }
+
+    private String getOptionValue(@Nonnull ApplicationArguments args, @Nonnull String option, @Nonnull String defaultValue) {
+        var value = getOptionValue(args, option);
+        return value != null ? value : defaultValue;
+    }
+
+    private OutputFormatter.Format parseOutputFormat(@Nonnull String formatStr) {
+        return switch (formatStr.toLowerCase()) {
+            case "txt", "text" -> OutputFormatter.Format.TXT;
+            case "csv" -> OutputFormatter.Format.CSV;
+            case "dot", "graphviz" -> OutputFormatter.Format.DOT;
+            default -> {
+                logger.warn("Unknown output format '{}', using TXT format", formatStr);
+                yield OutputFormatter.Format.TXT;
+            }
+        };
     }
 }
