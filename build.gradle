@@ -32,8 +32,17 @@ dependencyManagement {
     imports {
         mavenBom 'org.springframework.boot:spring-boot-dependencies:3.5.4'
     }
+    dependencies {
+        dependency 'com.ibm.wala:com.ibm.wala.core:1.6.10'
+        dependency 'com.ibm.wala:com.ibm.wala.util:1.6.10'
+        dependency 'com.ibm.wala:com.ibm.wala.shrike:1.6.10'
+    }
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'com.ibm.wala:com.ibm.wala.core'
+    implementation 'com.ibm.wala:com.ibm.wala.util'
+    implementation 'com.ibm.wala:com.ibm.wala.shrike'
+    implementation 'jakarta.annotation:jakarta.annotation-api'
 }
