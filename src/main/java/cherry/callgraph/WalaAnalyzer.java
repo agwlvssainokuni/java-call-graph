@@ -19,6 +19,15 @@ package cherry.callgraph;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
+import com.ibm.wala.ipa.callgraph.CallGraph;
+import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
+import com.ibm.wala.ipa.callgraph.Entrypoint;
+import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
+import com.ibm.wala.ipa.callgraph.impl.Util;
+import com.ibm.wala.ipa.callgraph.AnalysisOptions;
+import com.ibm.wala.classLoader.Language;
+import com.ibm.wala.ipa.callgraph.AnalysisCacheImpl;
+import com.ibm.wala.ipa.callgraph.IAnalysisCacheView;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.cha.ClassHierarchyFactory;
@@ -26,6 +35,7 @@ import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.shrike.shrikeCT.InvalidClassFileException;
 import com.ibm.wala.core.util.config.AnalysisScopeReader;
 import com.ibm.wala.core.util.io.FileProvider;
+import com.ibm.wala.core.util.strings.Atom;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +57,7 @@ public class WalaAnalyzer {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Nonnull
-    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose) throws IOException, ClassHierarchyException {
+    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose) throws IOException, ClassHierarchyException, CallGraphBuilderCancelException {
         logger.info("Initializing WALA analysis for {} files", filePaths.size());
 
         // Create analysis scope
@@ -74,11 +84,28 @@ public class WalaAnalyzer {
             logger.info("Class hierarchy built with {} classes", classHierarchy.getNumberOfClasses());
         }
 
-        // Collect classes and methods
-        var result = collectClassesAndMethods(classHierarchy, verbose);
+        // Find entry points (main methods)
+        logger.info("Finding entry points...");
+        Iterable<Entrypoint> entrypoints = findEntryPoints(classHierarchy, verbose);
         
-        logger.info("Analysis completed: {} classes, {} methods found", 
-                result.classes().size(), result.methods().size());
+        // Build call graph using CHA (Class Hierarchy Analysis)
+        logger.info("Building call graph with CHA...");
+        var options = new AnalysisOptions(scope, entrypoints);
+        IAnalysisCacheView cache = new AnalysisCacheImpl();
+        var callGraphBuilder = Util.makeZeroCFABuilder(
+                Language.JAVA, options, cache, classHierarchy, scope
+        );
+        CallGraph callGraph = callGraphBuilder.makeCallGraph(options, null);
+
+        if (verbose) {
+            logger.info("Call graph built with {} nodes", callGraph.getNumberOfNodes());
+        }
+
+        // Collect classes, methods, and call graph information
+        var result = collectAnalysisResults(classHierarchy, callGraph, verbose);
+        
+        logger.info("Analysis completed: {} classes, {} methods, {} call edges found", 
+                result.classes().size(), result.methods().size(), result.callEdges().size());
 
         return result;
     }
@@ -140,13 +167,55 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    private AnalysisResult collectClassesAndMethods(
+    private Iterable<Entrypoint> findEntryPoints(@Nonnull IClassHierarchy classHierarchy, boolean verbose) {
+        List<Entrypoint> entrypoints = new ArrayList<>();
+        
+        Iterator<IClass> classIterator = classHierarchy.iterator();
+        while (classIterator.hasNext()) {
+            IClass clazz = classIterator.next();
+            
+            // Skip system classes
+            if (clazz.getName().toString().startsWith("Ljava/") ||
+                clazz.getName().toString().startsWith("Lsun/") ||
+                clazz.getName().toString().startsWith("Lcom/sun/") ||
+                clazz.getName().toString().startsWith("Ljavax/")) {
+                continue;
+            }
+
+            // Look for main methods
+            for (IMethod method : clazz.getDeclaredMethods()) {
+                if (method.getName().toString().equals("main") && 
+                    method.isStatic() && 
+                    method.isPublic()) {
+                    
+                    entrypoints.add(new DefaultEntrypoint(method, classHierarchy));
+                    if (verbose) {
+                        logger.info("Found entry point: {}.main", clazz.getName());
+                    }
+                }
+            }
+        }
+        
+        if (entrypoints.isEmpty()) {
+            logger.warn("No main methods found as entry points");
+        } else {
+            logger.info("Found {} entry point(s)", entrypoints.size());
+        }
+        
+        return entrypoints;
+    }
+
+    @Nonnull
+    private AnalysisResult collectAnalysisResults(
             @Nonnull IClassHierarchy classHierarchy,
+            @Nonnull CallGraph callGraph,
             boolean verbose
     ) {
         List<ClassInfo> classes = new ArrayList<>();
         List<MethodInfo> methods = new ArrayList<>();
+        List<CallEdgeInfo> callEdges = new ArrayList<>();
 
+        // Collect classes and methods
         Iterator<IClass> classIterator = classHierarchy.iterator();
         while (classIterator.hasNext()) {
             IClass clazz = classIterator.next();
@@ -155,7 +224,8 @@ public class WalaAnalyzer {
             if (clazz.isInterface() || clazz.isAbstract() || 
                 clazz.getName().toString().startsWith("Ljava/") ||
                 clazz.getName().toString().startsWith("Lsun/") ||
-                clazz.getName().toString().startsWith("Lcom/sun/")) {
+                clazz.getName().toString().startsWith("Lcom/sun/") ||
+                clazz.getName().toString().startsWith("Ljavax/")) {
                 continue;
             }
 
@@ -181,12 +251,53 @@ public class WalaAnalyzer {
             }
         }
 
-        return new AnalysisResult(classes, methods);
+        // Collect call edges from call graph
+        callGraph.forEach(node -> {
+            var method = node.getMethod();
+            String callerClass = method.getDeclaringClass().getName().toString();
+            String callerMethod = method.getName().toString();
+            
+            // Skip system classes in call edges
+            if (callerClass.startsWith("Ljava/") ||
+                callerClass.startsWith("Lsun/") ||
+                callerClass.startsWith("Lcom/sun/") ||
+                callerClass.startsWith("Ljavax/")) {
+                return;
+            }
+            
+            callGraph.getSuccNodes(node).forEachRemaining(targetNode -> {
+                var targetMethod = targetNode.getMethod();
+                String targetClass = targetMethod.getDeclaringClass().getName().toString();
+                String targetMethodName = targetMethod.getName().toString();
+                
+                // Skip system classes in targets too
+                if (!targetClass.startsWith("Ljava/") &&
+                    !targetClass.startsWith("Lsun/") &&
+                    !targetClass.startsWith("Lcom/sun/") &&
+                    !targetClass.startsWith("Ljavax/")) {
+                    
+                    callEdges.add(new CallEdgeInfo(
+                            callerClass,
+                            callerMethod,
+                            targetClass,
+                            targetMethodName
+                    ));
+                    
+                    if (verbose) {
+                        logger.debug("Call edge: {}.{} -> {}.{}", 
+                                callerClass, callerMethod, targetClass, targetMethodName);
+                    }
+                }
+            });
+        });
+
+        return new AnalysisResult(classes, methods, callEdges);
     }
 
     public record AnalysisResult(
             @Nonnull List<ClassInfo> classes,
-            @Nonnull List<MethodInfo> methods
+            @Nonnull List<MethodInfo> methods,
+            @Nonnull List<CallEdgeInfo> callEdges
     ) {
     }
 
@@ -204,6 +315,14 @@ public class WalaAnalyzer {
             boolean isStatic,
             boolean isPrivate,
             boolean isPublic
+    ) {
+    }
+
+    public record CallEdgeInfo(
+            @Nonnull String callerClass,
+            @Nonnull String callerMethod,
+            @Nonnull String targetClass,
+            @Nonnull String targetMethod
     ) {
     }
 }

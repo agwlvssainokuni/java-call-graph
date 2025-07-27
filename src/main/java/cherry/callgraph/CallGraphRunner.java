@@ -161,9 +161,21 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
     private void displayResults(@Nonnull WalaAnalyzer.AnalysisResult result, boolean verbose) {
         logger.info("");
-        logger.info("=== Analysis Results ===");
+        logger.info("=== Call Graph Analysis Results ===");
+        
+        // Always show call graph edges
+        logger.info("Call Graph ({} edges):", result.callEdges().size());
+        for (var callEdge : result.callEdges()) {
+            logger.info("  {}.{} -> {}.{}", 
+                    callEdge.callerClass(), 
+                    callEdge.callerMethod(),
+                    callEdge.targetClass(),
+                    callEdge.targetMethod()
+            );
+        }
         
         if (verbose) {
+            logger.info("");
             logger.info("Classes found:");
             for (var classInfo : result.classes()) {
                 String type = classInfo.isInterface() ? "interface" : 
@@ -185,6 +197,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
                 );
             }
         } else {
+            logger.info("");
             logger.info("Classes ({}):", result.classes().size());
             for (var classInfo : result.classes()) {
                 logger.info("  {}", classInfo.name());
