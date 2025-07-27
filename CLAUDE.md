@@ -8,10 +8,12 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and WALA (
 
 ## Features
 
-- **Call Graph Analysis**: Uses WALA's Class Hierarchy Analysis (CHA) for static call graph construction
-- **Multiple Output Formats**: Support for TXT, CSV, and DOT (Graphviz) output formats
-- **Entry Point Detection**: Automatic detection of main methods as analysis entry points
-- **Flexible Input**: Supports JAR files, WAR files, class files, and directories
+- **Call Graph Analysis**: Multiple algorithms (CHA, RTA, 0-CFA) for static call graph construction
+- **Interface Call Resolution**: Automatic detection and expansion of interface implementations for Spring DI pattern analysis
+- **Package Filtering**: Focus analysis on specific packages while excluding JDK classes
+- **Custom Entry Points**: Support for specifying custom methods as analysis starting points
+- **Flexible Input**: Supports JAR files, class files, and directories
+- **Text Output Format**: Human-readable call graph output (TXT format implemented)
 - **Spring Boot CLI**: Professional command-line interface with proper exit code handling
 
 ## Architecture
@@ -22,7 +24,8 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and WALA (
 - Package structure: `cherry.callgraph` as base package
 
 **Analysis Engine**: WALA 1.6.10 integration
-- Static analysis: Class Hierarchy Analysis (CHA) for call graph construction
+- Static analysis: Multiple algorithms (CHA, RTA, 0-CFA) for call graph construction
+- Interface resolution: Automatic interface implementation detection for Spring DI patterns
 - Scope management: Proper WALA scope configuration with exclusions
 - Entry point handling: Automatic main method detection and custom entry point support
 
@@ -66,24 +69,27 @@ src/main/resources/
 # Verbose output
 ./gradlew bootRun --args="--verbose application.jar"
 
-# CSV format output
-./gradlew bootRun --args="--format=csv --output=callgraph.csv application.jar"
+# Package filtering
+./gradlew bootRun --args="--package=cherry.testtool application.jar"
 
-# DOT format for visualization
-./gradlew bootRun --args="--format=dot --output=callgraph.dot application.jar"
+# RTA algorithm for better interface resolution
+./gradlew bootRun --args="--algorithm=rta --package=cherry.testtool application.jar"
+
+# Custom entry point analysis
+./gradlew bootRun --args="--entry=InvokerController.invoke application.jar"
 ```
 
 ## CLI Options
 
-- `--output=<file>`: Output file for call graph (default: stdout)
-- `--format=<format>`: Output format: txt, csv, dot (default: txt)
-- `--algorithm=<algo>`: Algorithm: cha, rta, 0cfa (default: cha) 
-- `--entry=<method>`: Entry point method (default: main methods)
-- `--package=<package>`: Filter by package name
-- `--exclude-jdk`: Exclude JDK classes from analysis
+- `--algorithm=<algo>`: Algorithm: cha, rta, 0cfa (default: cha) - RTA recommended for interface calls
+- `--entry=<method>`: Entry point method (default: main methods) - supports ClassName.methodName format
+- `--package=<package>`: Filter by package name - recommended for focused analysis
+- `--exclude-jdk`: Exclude JDK classes from analysis (default: false)
 - `--quiet`: Suppress standard output
 - `--verbose`: Show detailed information
-- `--help`: Show help message
+- `--output=<file>`: Output file for call graph (PENDING - currently stdout only)
+- `--format=<format>`: Output format: txt, csv, dot (PENDING - currently txt only)
+- `--help`: Show help message (PENDING)
 
 ## Key Dependencies
 
@@ -102,21 +108,22 @@ src/main/resources/
 - System exclusions: Standard JDK packages filtered out
 
 **Call Graph Construction**:
-- Algorithm: Class Hierarchy Analysis (CHA) via `Util.makeZeroCFABuilder`
-- Entry points: Automatic main method detection
+- Algorithms: CHA (`Util.makeZeroCFABuilder`), RTA (`Util.makeRTABuilder`), 0-CFA (`Util.makeZeroOneCFABuilder`)
+- Interface resolution: `expandEntryPointsWithImplementations()` adds concrete implementations as entry points
+- Entry points: Automatic main method detection and custom method specification
 - Cache: `AnalysisCacheImpl` for performance optimization
 
 **Supported Input Types**:
 - `.jar` files: Added via `scope.addToScope()`
-- `.war` files: Treated as JAR files
 - `.class` files: Added via `scope.addClassFileToScope()`
 - Directories: Recursively scanned for class files
+- `.war` files: PENDING - planned support
 
 ## Output Formats
 
-**TXT Format**: Human-readable text output with call edges and class listings
-**CSV Format**: Structured data with headers for spreadsheet analysis
-**DOT Format**: Graphviz-compatible format for visual call graph generation
+**TXT Format**: Human-readable text output with call edges and class listings (IMPLEMENTED)
+**CSV Format**: Structured data with headers for spreadsheet analysis (PENDING)
+**DOT Format**: Graphviz-compatible format for visual call graph generation (PENDING)
 
 ## Logging Configuration
 
@@ -141,3 +148,38 @@ Run analysis on the built application itself for testing:
 ```
 
 Expected output: Call graph showing Main.main -> Main.doMain relationship along with detected classes and methods.
+
+## Interface Call Resolution
+
+The application includes sophisticated interface call resolution for Spring Dependency Injection patterns:
+
+- **Automatic Implementation Detection**: `expandEntryPointsWithImplementations()` method in `WalaAnalyzer.java:424-445`
+- **Interface Implementation Mapping**: `addImplementationsForInterfaces()` method in `WalaAnalyzer.java:447-488`
+- **Algorithm Recommendation**: Use RTA algorithm (`--algorithm=rta`) for better interface call resolution
+- **Package Filtering Integration**: Interface resolution respects package filters for focused analysis
+
+Example usage for Spring applications:
+```bash
+# Analyze Spring application with interface resolution
+./gradlew bootRun --args="--algorithm=rta --package=cherry.testtool ../cherry-testtool/lib/build/libs/lib-plain.jar"
+
+# Expected: Controller → Service interface calls properly resolved (e.g., 8 call edges found)
+```
+
+## Current Implementation Status
+
+**COMPLETED Features:**
+- Core call graph analysis with multiple algorithms (CHA, RTA, 0-CFA)
+- Interface call resolution for Spring DI patterns
+- Package filtering and JDK exclusion
+- Custom entry point specification
+- Text output format
+- Comprehensive logging and error handling
+
+**PENDING Features (Medium Priority):**
+- Multiple output formats (CSV, DOT) 
+- Output file option (--output=<file>)
+
+**PENDING Features (Low Priority):**
+- WAR file support
+- Comprehensive help system (--help)
