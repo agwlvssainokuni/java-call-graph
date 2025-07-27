@@ -103,7 +103,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         }
 
         // Parse output options
-        var outputFile = getOptionValue(args, "output");
+        var outputFile = getOptionValue(args, "output", null);
         var formatStr = getOptionValue(args, "format", "txt");
         var format = parseOutputFormat(formatStr);
 
@@ -218,14 +218,9 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         }
     }
 
-    private String getOptionValue(@Nonnull ApplicationArguments args, @Nonnull String option) {
+    private String getOptionValue(@Nonnull ApplicationArguments args, @Nonnull String option, String defaultValue) {
         var values = args.getOptionValues(option);
-        return values != null && !values.isEmpty() ? values.get(0) : null;
-    }
-
-    private String getOptionValue(@Nonnull ApplicationArguments args, @Nonnull String option, @Nonnull String defaultValue) {
-        var value = getOptionValue(args, option);
-        return value != null ? value : defaultValue;
+        return values != null && !values.isEmpty() ? values.getFirst() : defaultValue;
     }
 
     private OutputFormatter.Format parseOutputFormat(@Nonnull String formatStr) {
