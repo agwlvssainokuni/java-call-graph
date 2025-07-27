@@ -33,7 +33,12 @@ import java.util.List;
 public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final WalaAnalyzer walaAnalyzer;
     private int exitCode = 0;
+
+    public CallGraphRunner(WalaAnalyzer walaAnalyzer) {
+        this.walaAnalyzer = walaAnalyzer;
+    }
 
     @Override
     public void run(@Nonnull ApplicationArguments args) {
@@ -95,9 +100,22 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
             }
         }
 
-        // TODO: WALA analysis will be implemented here
-        if (verbose && !quiet) {
-            logger.info("WALA call graph analysis will be implemented in Phase 1, Milestone 1.2");
+        // Perform WALA analysis
+        try {
+            var result = walaAnalyzer.analyzeFiles(files, verbose);
+            
+            if (!quiet) {
+                displayResults(result, verbose);
+            }
+            
+        } catch (Exception e) {
+            if (!quiet) {
+                logger.error("WALA analysis failed: {}", e.getMessage());
+                if (verbose) {
+                    logger.debug("Stack trace:", e);
+                }
+            }
+            throw new RuntimeException("WALA analysis failed", e);
         }
     }
 
@@ -137,6 +155,39 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         } catch (Exception e) {
             logger.warn("Error validating file: {} - {}", filePath, e.getMessage());
             return false;
+        }
+    }
+
+    private void displayResults(@Nonnull WalaAnalyzer.AnalysisResult result, boolean verbose) {
+        logger.info("");
+        logger.info("=== Analysis Results ===");
+        
+        if (verbose) {
+            logger.info("Classes found:");
+            for (var classInfo : result.classes()) {
+                String type = classInfo.isInterface() ? "interface" : 
+                             classInfo.isAbstract() ? "abstract class" : "class";
+                logger.info("  {} ({})", classInfo.name(), type);
+            }
+            
+            logger.info("");
+            logger.info("Methods found:");
+            for (var methodInfo : result.methods()) {
+                String visibility = methodInfo.isPublic() ? "public" : 
+                                  methodInfo.isPrivate() ? "private" : "package";
+                String modifier = methodInfo.isStatic() ? "static" : "instance";
+                logger.info("  {}.{} ({} {})", 
+                    methodInfo.className(), 
+                    methodInfo.methodName(),
+                    visibility,
+                    modifier
+                );
+            }
+        } else {
+            logger.info("Classes ({}):", result.classes().size());
+            for (var classInfo : result.classes()) {
+                logger.info("  {}", classInfo.name());
+            }
         }
     }
 }
