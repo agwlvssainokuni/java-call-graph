@@ -363,8 +363,11 @@ public class WalaAnalyzer {
         
         // Convert WALA class name format (Lcom/example/Class;) to package format
         String packageName = className;
-        if (packageName.startsWith("L") && packageName.endsWith(";")) {
-            packageName = packageName.substring(1, packageName.length() - 1);
+        if (packageName.startsWith("L")) {
+            packageName = packageName.substring(1);
+            if (packageName.endsWith(";")) {
+                packageName = packageName.substring(0, packageName.length() - 1);
+            }
         }
         packageName = packageName.replace("/", ".");
         
@@ -372,6 +375,9 @@ public class WalaAnalyzer {
         int lastDot = packageName.lastIndexOf(".");
         if (lastDot > 0) {
             packageName = packageName.substring(0, lastDot);
+        } else {
+            // If no package (default package), set to empty string
+            packageName = "";
         }
         
         // Check if package matches any filter
@@ -380,7 +386,6 @@ public class WalaAnalyzer {
                 return true;
             }
         }
-        
         return false;
     }
 
@@ -409,27 +414,10 @@ public class WalaAnalyzer {
             logger.debug("Java classpath: {}", classPath);
         }
         
-        if (isRunningFromSpringBootJar(classPath)) {
-            if (verbose) {
-                logger.info("Detected Spring Boot executable JAR, extracting classes for WALA analysis");
-            }
-            Path extractedPath = extractSpringBootJarClasses(classPath, verbose);
-            scope.addToScope(
-                scope.getApplicationLoader(),
-                new com.ibm.wala.classLoader.BinaryDirectoryTreeModule(extractedPath.toFile())
-            );
-        } else {
-            // Running from IDE or extracted classes - use current directory
-            if (verbose) {
-                logger.debug("Using current directory for WALA scope");
-            }
-            File currentDir = new File(".");
-            if (currentDir.exists()) {
-                scope.addToScope(
-                    scope.getApplicationLoader(),
-                    new com.ibm.wala.classLoader.BinaryDirectoryTreeModule(currentDir)
-                );
-            }
+        // Note: We will add input files separately via addFileToScope() method
+        // This ensures only user-specified files are analyzed, not the application itself
+        if (verbose) {
+            logger.debug("Analysis scope will be populated with user-specified input files only");
         }
         
         return scope;
