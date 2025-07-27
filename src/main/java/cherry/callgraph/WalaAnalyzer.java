@@ -37,13 +37,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 @Component
@@ -89,10 +87,6 @@ public class WalaAnalyzer {
         // Build call graph using specified algorithm
         logger.info("Building call graph with {}...", algorithm);
         var options = new AnalysisOptions(scope, entrypoints);
-        
-        // Add interface implementations to resolve interface calls
-        addInterfaceImplementationsToOptions(options, classHierarchy, packageFilters);
-        
         IAnalysisCacheView cache = new AnalysisCacheImpl();
         var callGraphBuilder = createCallGraphBuilder(algorithm, options, cache, classHierarchy);
         CallGraph callGraph = callGraphBuilder.makeCallGraph(options, null);
@@ -441,87 +435,6 @@ public class WalaAnalyzer {
         return scope;
     }
     
-    private boolean isRunningFromSpringBootJar(@Nonnull String classPath) {
-        if (!classPath.endsWith(".jar")) {
-            return false;
-        }
-        
-        try (JarFile jarFile = new JarFile(classPath)) {
-            return jarFile.getEntry("BOOT-INF/") != null;
-        } catch (IOException e) {
-            logger.warn("Could not check if JAR is Spring Boot format: {}", e.getMessage());
-            return false;
-        }
-    }
-    
-    @Nonnull
-    private Path extractSpringBootJarClasses(@Nonnull String jarPath, boolean verbose) throws IOException {
-        Path tempDir = Files.createTempDirectory("wala-spring-boot-");
-        if (verbose) {
-            logger.info("Extracting Spring Boot JAR classes to: {}", tempDir);
-        }
-        
-        try (JarFile jarFile = new JarFile(jarPath)) {
-            jarFile.stream()
-                .filter(entry -> entry.getName().startsWith("BOOT-INF/classes/"))
-                .filter(entry -> !entry.isDirectory())
-                .filter(entry -> entry.getName().endsWith(".class"))
-                .forEach(entry -> {
-                    try {
-                        extractJarEntry(jarFile, entry, tempDir, verbose);
-                    } catch (IOException e) {
-                        logger.warn("Failed to extract {}: {}", entry.getName(), e.getMessage());
-                    }
-                });
-        }
-        
-        // Register shutdown hook to clean up temporary directory
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                deleteRecursively(tempDir);
-                if (verbose) {
-                    logger.debug("Cleaned up temporary directory: {}", tempDir);
-                }
-            } catch (IOException e) {
-                logger.warn("Failed to clean up temporary directory {}: {}", tempDir, e.getMessage());
-            }
-        }));
-        
-        return tempDir;
-    }
-    
-    private void extractJarEntry(@Nonnull JarFile jarFile, @Nonnull JarEntry entry, @Nonnull Path tempDir, boolean verbose) throws IOException {
-        // Remove "BOOT-INF/classes/" prefix to get the relative class path
-        String relativePath = entry.getName().substring("BOOT-INF/classes/".length());
-        Path targetPath = tempDir.resolve(relativePath);
-        
-        // Create parent directories
-        Files.createDirectories(targetPath.getParent());
-        
-        // Extract the file
-        try (InputStream inputStream = jarFile.getInputStream(entry)) {
-            Files.copy(inputStream, targetPath);
-            if (verbose) {
-                logger.debug("Extracted: {} -> {}", entry.getName(), targetPath);
-            }
-        }
-    }
-    
-    private void deleteRecursively(@Nonnull Path path) throws IOException {
-        if (Files.isDirectory(path)) {
-            try (var stream = Files.list(path)) {
-                stream.forEach(child -> {
-                    try {
-                        deleteRecursively(child);
-                    } catch (IOException e) {
-                        logger.warn("Failed to delete {}: {}", child, e.getMessage());
-                    }
-                });
-            }
-        }
-        Files.deleteIfExists(path);
-    }
-
     @Nonnull
     private Iterable<Entrypoint> expandEntryPointsWithImplementations(
             @Nonnull IClassHierarchy classHierarchy, 
@@ -583,39 +496,6 @@ public class WalaAnalyzer {
                             entrypoints.add(newEntrypoint);
                             logger.debug("Added implementation method: {}.{}", className, implMethod.getName());
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    private void addInterfaceImplementationsToOptions(
-            @Nonnull AnalysisOptions options,
-            @Nonnull IClassHierarchy classHierarchy,
-            @Nonnull List<String> packageFilters
-    ) {
-        logger.debug("Adding interface implementations to analysis options...");
-        
-        // Find all interfaces and their implementations in the package
-        for (IClass clazz : classHierarchy) {
-            String className = clazz.getName().toString();
-            
-            if (!matchesPackageFilter(className, packageFilters)) {
-                continue;
-            }
-            
-            // Check if this is an interface
-            if (clazz.isInterface()) {
-                logger.debug("Found interface: {}", className);
-                
-                // Find all implementations of this interface
-                for (IClass implClass : classHierarchy) {
-                    if (matchesPackageFilter(implClass.getName().toString(), packageFilters) &&
-                        classHierarchy.implementsInterface(implClass, clazz)) {
-                        logger.debug("Found implementation: {} implements {}", implClass.getName(), className);
-                        
-                        // Add mapping for interface call resolution
-                        // This helps WALA understand that interface calls should resolve to implementation
                     }
                 }
             }
