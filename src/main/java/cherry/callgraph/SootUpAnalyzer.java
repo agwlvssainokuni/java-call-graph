@@ -24,19 +24,16 @@ import sootup.callgraph.CallGraph;
 import sootup.callgraph.CallGraphAlgorithm;
 import sootup.callgraph.ClassHierarchyAnalysisAlgorithm;
 import sootup.callgraph.RapidTypeAnalysisAlgorithm;
-// Call class not needed - callsFrom returns Set<MethodSignature> directly
 import sootup.core.inputlocation.AnalysisInputLocation;
-import sootup.java.core.JavaSootClass;
 import sootup.core.model.SootMethod;
 import sootup.core.signatures.MethodSignature;
 import sootup.core.types.ClassType;
 import sootup.java.bytecode.frontend.inputlocation.JavaClassPathAnalysisInputLocation;
+import sootup.java.core.JavaSootClass;
 import sootup.java.core.views.JavaView;
-import sootup.java.core.types.JavaClassType;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,23 +96,21 @@ public class SootUpAnalyzer {
     private List<AnalysisInputLocation> createInputLocations(
             @Nonnull List<String> filePaths,
             boolean verbose
-    ) throws IOException {
-        List<AnalysisInputLocation> inputLocations = new ArrayList<>();
-
-        for (String filePath : filePaths) {
-            Path path = Paths.get(filePath);
-
-            if (Files.exists(path)) {
-                if (verbose) {
-                    logger.debug("Adding input location: {}", filePath);
-                }
-                inputLocations.add(new JavaClassPathAnalysisInputLocation(path.toString()));
-            } else {
-                logger.warn("File or directory does not exist: {}", filePath);
-            }
-        }
-
-        return inputLocations;
+    ) {
+        return filePaths.stream()
+                .map(Paths::get)
+                .filter(path -> {
+                    if (!Files.exists(path)) {
+                        logger.warn("File or directory does not exist: {}", path);
+                        return false;
+                    }
+                    if (verbose) {
+                        logger.debug("Adding input location: {}", path);
+                    }
+                    return true;
+                })
+                .map(path -> new JavaClassPathAnalysisInputLocation(path.toString()))
+                .collect(Collectors.toList());
     }
 
     @Nonnull
@@ -130,40 +125,35 @@ public class SootUpAnalyzer {
             @Nonnull List<String> customEntryPoints,
             @Nonnull List<String> packageFilters
     ) {
-        List<MethodSignature> entryPoints = new ArrayList<>();
+        List<MethodSignature> entryPoints;
 
         if (!customEntryPoints.isEmpty()) {
             // Use custom entry points
-            for (String entryPointSpec : customEntryPoints) {
-                var foundMethods = findMethodsBySpec(view, entryPointSpec, packageFilters);
-                entryPoints.addAll(foundMethods);
-                if (verbose) {
-                    for (MethodSignature method : foundMethods) {
-                        logger.info("Found custom entry point: {}", method);
-                    }
-                }
-            }
+            entryPoints = customEntryPoints.stream()
+                    .flatMap(entryPointSpec -> {
+                        var foundMethods = findMethodsBySpec(view, entryPointSpec, packageFilters);
+                        if (verbose) {
+                            foundMethods.forEach(method -> logger.info("Found custom entry point: {}", method));
+                        }
+                        return foundMethods.stream();
+                    })
+                    .collect(Collectors.toList());
         } else {
             // Find main methods
-            var classes = view.getClasses().collect(Collectors.toList());
-            for (JavaSootClass sootClass : classes) {
-                if (!matchesPackageFilter(sootClass.getType().getClassName(), packageFilters)) {
-                    continue;
-                }
-
-                for (SootMethod method : sootClass.getMethods()) {
-                    if (method.getName().equals("main") &&
+            entryPoints = view.getClasses()
+                    .filter(sootClass -> matchesPackageFilter(sootClass.getType().getClassName(), packageFilters))
+                    .flatMap(sootClass -> sootClass.getMethods().stream())
+                    .filter(method -> method.getName().equals("main") &&
                             method.isStatic() &&
                             method.isPublic() &&
-                            method.getParameterTypes().size() == 1) {
-                        
-                        entryPoints.add(method.getSignature());
+                            method.getParameterTypes().size() == 1)
+                    .peek(method -> {
                         if (verbose) {
                             logger.info("Found entry point: {}", method.getSignature());
                         }
-                    }
-                }
-            }
+                    })
+                    .map(SootMethod::getSignature)
+                    .collect(Collectors.toList());
         }
 
         if (entryPoints.isEmpty()) {
@@ -185,45 +175,32 @@ public class SootUpAnalyzer {
             @Nonnull String entryPointSpec,
             @Nonnull List<String> packageFilters
     ) {
-        List<MethodSignature> foundMethods = new ArrayList<>();
-
         // Parse entry point specification: ClassName.methodName or just methodName
-        String className = null;
-        String methodName;
+        final String className;
+        final String methodName;
 
         if (entryPointSpec.contains(".")) {
             int lastDot = entryPointSpec.lastIndexOf(".");
             className = entryPointSpec.substring(0, lastDot);
             methodName = entryPointSpec.substring(lastDot + 1);
         } else {
+            className = null;
             methodName = entryPointSpec;
         }
 
-        var classes = view.getClasses().collect(Collectors.toList());
-        for (JavaSootClass sootClass : classes) {
-            String actualClassName = sootClass.getType().getClassName();
-
-            // Apply package filter
-            if (!matchesPackageFilter(actualClassName, packageFilters)) {
-                continue;
-            }
-
-            // Check class name if specified
-            if (className != null) {
-                if (!actualClassName.equals(className) && !actualClassName.endsWith("." + className)) {
-                    continue;
-                }
-            }
-
-            // Look for matching methods
-            for (SootMethod method : sootClass.getMethods()) {
-                if (method.getName().equals(methodName)) {
-                    foundMethods.add(method.getSignature());
-                }
-            }
-        }
-
-        return foundMethods;
+        return view.getClasses()
+                .filter(sootClass -> matchesPackageFilter(sootClass.getType().getClassName(), packageFilters))
+                .filter(sootClass -> {
+                    if (className == null) {
+                        return true;
+                    }
+                    String actualClassName = sootClass.getType().getClassName();
+                    return actualClassName.equals(className) || actualClassName.endsWith("." + className);
+                })
+                .flatMap(sootClass -> sootClass.getMethods().stream())
+                .filter(method -> method.getName().equals(methodName))
+                .map(SootMethod::getSignature)
+                .collect(Collectors.toList());
     }
 
     @Nonnull
@@ -271,13 +248,13 @@ public class SootUpAnalyzer {
                 for (JavaSootClass sootClass : classes) {
                     if (!sootClass.isInterface() && !sootClass.isAbstract() &&
                             matchesPackageFilter(sootClass.getType().getClassName(), packageFilters)) {
-                        
+
                         if (sootClass.getInterfaces().contains(interfaceType)) {
                             // Add public methods of implementation as entry points
                             for (SootMethod method : sootClass.getMethods()) {
                                 if (method.isPublic() && !method.isAbstract() &&
                                         !method.getName().equals("<init>") && !method.getName().equals("<clinit>")) {
-                                    
+
                                     entryPoints.add(method.getSignature());
                                     logger.debug("Added implementation method: {} for interface {}",
                                             method.getSignature(), interfaceType.getClassName());
