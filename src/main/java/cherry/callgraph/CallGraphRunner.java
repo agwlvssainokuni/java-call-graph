@@ -88,7 +88,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
     private void processFiles(@Nonnull ApplicationArguments args) {
         var files = validateInputFiles(args.getNonOptionArgs());
-        
+
         if (files.isEmpty()) {
             throw new IllegalArgumentException("No valid input files or directories found");
         }
@@ -107,20 +107,20 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         var outputFile = getOptionValue(args, "output", null);
         var formatStr = getOptionValue(args, "format", "txt");
         var format = parseOutputFormat(formatStr);
-        
+
         // Parse package filters
         var packageFilters = parsePackageFilters(args);
         if (!quiet && !packageFilters.isEmpty()) {
             logger.info("Package filters: {}", String.join(", ", packageFilters));
         }
-        
+
         // Parse algorithm
         var algorithmStr = getOptionValue(args, "algorithm", "cha");
         var algorithm = parseAlgorithm(algorithmStr);
         if (!quiet) {
             logger.info("Analysis algorithm: {}", algorithm);
         }
-        
+
         // Parse custom entry points
         var customEntryPoints = parseEntryPoints(args);
         if (!quiet && !customEntryPoints.isEmpty()) {
@@ -136,7 +136,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         // Perform SootUp analysis
         try {
             var result = sootUpAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm, customEntryPoints, excludeJdk);
-            
+
             // Write output in specified format
             if (outputFile != null || format != OutputFormatter.Format.TXT) {
                 outputFormatter.writeOutput(result, format, outputFile, verbose);
@@ -146,7 +146,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
             } else if (!quiet) {
                 displayResults(result, verbose);
             }
-            
+
         } catch (Exception e) {
             if (!quiet) {
                 logger.error("SootUp analysis failed: {}", e.getMessage());
@@ -169,7 +169,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
     private boolean isValidInputFile(@Nonnull String filePath) {
         try {
             Path path = Paths.get(filePath);
-            
+
             if (!Files.exists(path)) {
                 logger.warn("File or directory does not exist: {}", filePath);
                 return false;
@@ -201,38 +201,38 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
     private void displayResults(@Nonnull SootUpAnalyzer.AnalysisResult result, boolean verbose) {
         logger.info("");
         logger.info("=== Call Graph Analysis Results ===");
-        
+
         // Always show call graph edges
         logger.info("Call Graph ({} edges):", result.callEdges().size());
         for (var callEdge : result.callEdges()) {
-            logger.info("  {}.{} -> {}.{}", 
-                    callEdge.callerClass(), 
+            logger.info("  {}.{} -> {}.{}",
+                    callEdge.callerClass(),
                     callEdge.callerMethod(),
                     callEdge.targetClass(),
                     callEdge.targetMethod()
             );
         }
-        
+
         if (verbose) {
             logger.info("");
             logger.info("Classes found:");
             for (var classInfo : result.classes()) {
-                String type = classInfo.isInterface() ? "interface" : 
-                             classInfo.isAbstract() ? "abstract class" : "class";
+                String type = classInfo.isInterface() ? "interface" :
+                        classInfo.isAbstract() ? "abstract class" : "class";
                 logger.info("  {} ({})", classInfo.name(), type);
             }
-            
+
             logger.info("");
             logger.info("Methods found:");
             for (var methodInfo : result.methods()) {
-                String visibility = methodInfo.isPublic() ? "public" : 
-                                  methodInfo.isPrivate() ? "private" : "package";
+                String visibility = methodInfo.isPublic() ? "public" :
+                        methodInfo.isPrivate() ? "private" : "package";
                 String modifier = methodInfo.isStatic() ? "static" : "instance";
-                logger.info("  {}.{} ({} {})", 
-                    methodInfo.className(), 
-                    methodInfo.methodName(),
-                    visibility,
-                    modifier
+                logger.info("  {}.{} ({} {})",
+                        methodInfo.className(),
+                        methodInfo.methodName(),
+                        visibility,
+                        modifier
                 );
             }
         } else {
@@ -267,7 +267,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         if (packageOptions == null || packageOptions.isEmpty()) {
             return List.of();
         }
-        
+
         List<String> filters = new ArrayList<>();
         for (String packageOption : packageOptions) {
             // Split by comma to support multiple packages in one option
@@ -279,7 +279,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
                 }
             }
         }
-        
+
         return filters;
     }
 
@@ -301,7 +301,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         if (entryOptions == null || entryOptions.isEmpty()) {
             return List.of();
         }
-        
+
         List<String> entryPoints = new ArrayList<>();
         for (String entryOption : entryOptions) {
             // Split by comma to support multiple entry points in one option
@@ -313,7 +313,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
                 }
             }
         }
-        
+
         return entryPoints;
     }
 }

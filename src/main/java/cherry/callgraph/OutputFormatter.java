@@ -68,38 +68,38 @@ public class OutputFormatter {
     ) {
         writer.println("=== Call Graph Analysis Results ===");
         writer.println();
-        
+
         // Call graph edges
         writer.printf("Call Graph (%d edges):%n", result.callEdges().size());
         for (var callEdge : result.callEdges()) {
-            writer.printf("  %s.%s -> %s.%s%n", 
-                    callEdge.callerClass(), 
+            writer.printf("  %s.%s -> %s.%s%n",
+                    callEdge.callerClass(),
                     callEdge.callerMethod(),
                     callEdge.targetClass(),
                     callEdge.targetMethod()
             );
         }
-        
+
         if (verbose) {
             writer.println();
             writer.println("Classes found:");
             for (var classInfo : result.classes()) {
-                String type = classInfo.isInterface() ? "interface" : 
-                             classInfo.isAbstract() ? "abstract class" : "class";
+                String type = classInfo.isInterface() ? "interface" :
+                        classInfo.isAbstract() ? "abstract class" : "class";
                 writer.printf("  %s (%s)%n", classInfo.name(), type);
             }
-            
+
             writer.println();
             writer.println("Methods found:");
             for (var methodInfo : result.methods()) {
-                String visibility = methodInfo.isPublic() ? "public" : 
-                                  methodInfo.isPrivate() ? "private" : "package";
+                String visibility = methodInfo.isPublic() ? "public" :
+                        methodInfo.isPrivate() ? "private" : "package";
                 String modifier = methodInfo.isStatic() ? "static" : "instance";
-                writer.printf("  %s.%s (%s %s)%n", 
-                    methodInfo.className(), 
-                    methodInfo.methodName(),
-                    visibility,
-                    modifier
+                writer.printf("  %s.%s (%s %s)%n",
+                        methodInfo.className(),
+                        methodInfo.methodName(),
+                        visibility,
+                        modifier
                 );
             }
         } else {
@@ -118,7 +118,7 @@ public class OutputFormatter {
     ) {
         // CSV header for call edges
         writer.println("caller_class,caller_method,target_class,target_method");
-        
+
         // Call edges data
         for (var callEdge : result.callEdges()) {
             writer.printf("\"%s\",\"%s\",\"%s\",\"%s\"%n",
@@ -128,13 +128,13 @@ public class OutputFormatter {
                     escapeCsv(callEdge.targetMethod())
             );
         }
-        
+
         if (verbose) {
             writer.println();
             writer.println("class_name,type,is_interface,is_abstract");
             for (var classInfo : result.classes()) {
-                String type = classInfo.isInterface() ? "interface" : 
-                             classInfo.isAbstract() ? "abstract class" : "class";
+                String type = classInfo.isInterface() ? "interface" :
+                        classInfo.isAbstract() ? "abstract class" : "class";
                 writer.printf("\"%s\",\"%s\",%b,%b%n",
                         escapeCsv(classInfo.name()),
                         type,
@@ -142,12 +142,12 @@ public class OutputFormatter {
                         classInfo.isAbstract()
                 );
             }
-            
+
             writer.println();
             writer.println("class_name,method_name,signature,visibility,modifier");
             for (var methodInfo : result.methods()) {
-                String visibility = methodInfo.isPublic() ? "public" : 
-                                  methodInfo.isPrivate() ? "private" : "package";
+                String visibility = methodInfo.isPublic() ? "public" :
+                        methodInfo.isPrivate() ? "private" : "package";
                 String modifier = methodInfo.isStatic() ? "static" : "instance";
                 writer.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
                         escapeCsv(methodInfo.className()),
@@ -168,35 +168,35 @@ public class OutputFormatter {
         writer.println("  rankdir=LR;");
         writer.println("  node [shape=box, style=rounded];");
         writer.println();
-        
+
         // Collect unique nodes
         var uniqueNodes = new java.util.HashSet<String>();
         for (var callEdge : result.callEdges()) {
             uniqueNodes.add(formatDotNode(callEdge.callerClass(), callEdge.callerMethod()));
             uniqueNodes.add(formatDotNode(callEdge.targetClass(), callEdge.targetMethod()));
         }
-        
+
         // Create nodes for all methods involved in call edges
         for (String nodeId : uniqueNodes) {
             String[] parts = nodeId.split("\\.", 2);
             if (parts.length == 2) {
-                writer.printf("  \"%s\" [label=\"%s\"];%n", 
-                        nodeId, 
+                writer.printf("  \"%s\" [label=\"%s\"];%n",
+                        nodeId,
                         escapeDot(formatMethodLabel(parts[0], parts[1]))
                 );
             }
         }
-        
+
         writer.println();
-        
+
         // Create edges
         for (var callEdge : result.callEdges()) {
             String callerNode = formatDotNode(callEdge.callerClass(), callEdge.callerMethod());
             String targetNode = formatDotNode(callEdge.targetClass(), callEdge.targetMethod());
-            
+
             writer.printf("  \"%s\" -> \"%s\";%n", callerNode, targetNode);
         }
-        
+
         writer.println("}");
     }
 
@@ -219,7 +219,7 @@ public class OutputFormatter {
             simpleName = simpleName.substring(1, simpleName.length() - 1);
         }
         simpleName = simpleName.replace("/", ".");
-        
+
         return simpleName + "." + methodName;
     }
 }

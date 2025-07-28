@@ -141,7 +141,7 @@ public class SootUpAnalyzer {
         } else {
             // Find main methods
             entryPoints = view.getClasses()
-                    .filter(sootClass -> matchesPackageFilter(sootClass.getType().getClassName(), packageFilters))
+                    .filter(sootClass -> matchesPackageFilter(sootClass.getName(), packageFilters))
                     .flatMap(sootClass -> sootClass.getMethods().stream())
                     .filter(method -> method.getName().equals("main") &&
                             method.isStatic() &&
@@ -189,12 +189,12 @@ public class SootUpAnalyzer {
         }
 
         return view.getClasses()
-                .filter(sootClass -> matchesPackageFilter(sootClass.getType().getClassName(), packageFilters))
+                .filter(sootClass -> matchesPackageFilter(sootClass.getName(), packageFilters))
                 .filter(sootClass -> {
                     if (className == null) {
                         return true;
                     }
-                    String actualClassName = sootClass.getType().getClassName();
+                    String actualClassName = sootClass.getName();
                     return actualClassName.equals(className) || actualClassName.endsWith("." + className);
                 })
                 .flatMap(sootClass -> sootClass.getMethods().stream())
@@ -237,7 +237,7 @@ public class SootUpAnalyzer {
 
         // For each referenced interface, find concrete implementations
         for (ClassType interfaceType : referencedInterfaces) {
-            if (!matchesPackageFilter(interfaceType.getClassName(), packageFilters)) {
+            if (!matchesPackageFilter(interfaceType.getFullyQualifiedName(), packageFilters)) {
                 continue;
             }
 
@@ -247,7 +247,7 @@ public class SootUpAnalyzer {
                 var classes = view.getClasses().collect(Collectors.toList());
                 for (JavaSootClass sootClass : classes) {
                     if (!sootClass.isInterface() && !sootClass.isAbstract() &&
-                            matchesPackageFilter(sootClass.getType().getClassName(), packageFilters)) {
+                            matchesPackageFilter(sootClass.getName(), packageFilters)) {
 
                         if (sootClass.getInterfaces().contains(interfaceType)) {
                             // Add public methods of implementation as entry points
@@ -296,7 +296,7 @@ public class SootUpAnalyzer {
         // Collect classes and methods
         var allClasses = view.getClasses().collect(Collectors.toList());
         for (JavaSootClass sootClass : allClasses) {
-            String className = sootClass.getType().getClassName();
+            String className = sootClass.getName();
 
             // Skip JDK classes if excludeJdk is enabled
             if (excludeJdk && isJdkClass(className)) {
@@ -332,7 +332,7 @@ public class SootUpAnalyzer {
 
         // Collect call edges from call graph
         for (MethodSignature caller : callGraph.getMethodSignatures()) {
-            String callerClass = caller.getDeclClassType().getClassName();
+            String callerClass = caller.getDeclClassType().getFullyQualifiedName();
             String callerMethod = caller.getName();
 
             // Skip JDK classes in call edges if excludeJdk is enabled
@@ -348,7 +348,7 @@ public class SootUpAnalyzer {
             // SootUp 2.0.0 CallGraph API - callsFrom takes single MethodSignature
             callGraph.callsFrom(caller).forEach((CallGraph.Call call) -> {
                 MethodSignature target = call.getTargetMethodSignature();
-                String targetClass = target.getDeclClassType().getClassName();
+                String targetClass = target.getDeclClassType().getFullyQualifiedName();
                 String targetMethod = target.getName();
 
                 // Skip JDK classes in targets if excludeJdk is enabled
