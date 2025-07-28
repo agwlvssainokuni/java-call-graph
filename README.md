@@ -226,11 +226,12 @@ Test the tool on itself:
 
 - Java 21 language features (records, switch expressions, var)
 - Modern SootUp APIs (2.0.0 compatible methods)
-- Enhanced for-loops over iterators
+- Stream API and functional programming style preferred over imperative loops
 - Proper resource management with try-with-resources
 - Comprehensive error handling and logging
 - Import statements preferred over FQCN usage
 - Unused method parameters removed
+- Optional.ifPresent() preferred over if-present pattern
 
 ## License
 

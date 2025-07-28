@@ -145,11 +145,12 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 - Java 21 language features (records, switch expressions, var)
 - Modern SootUp APIs (2.0.0 compatible methods)
-- Enhanced for-loops over iterators
+- Stream API and functional programming style preferred over imperative loops
 - Proper resource management with try-with-resources
 - Comprehensive error handling and logging
 - Import statements preferred over FQCN usage
 - Unused method parameters should be removed
+- Optional.ifPresent() preferred over if-present pattern
 
 ## Testing
 
@@ -190,6 +191,8 @@ Example usage for Spring applications:
 - Output file option (--output=<file>)
 - Comprehensive logging and error handling
 - Migration from WALA to SootUp 2.0.0
+- Stream API refactoring for functional programming style
+- Proper SootUp class name handling (getName() and getFullyQualifiedName())
 
 **PENDING Features (Low Priority):**
 - WAR file support
