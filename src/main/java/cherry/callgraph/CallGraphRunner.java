@@ -34,12 +34,12 @@ import java.util.List;
 public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final WalaAnalyzer walaAnalyzer;
+    private final SootUpAnalyzer sootUpAnalyzer;
     private final OutputFormatter outputFormatter;
     private int exitCode = 0;
 
-    public CallGraphRunner(WalaAnalyzer walaAnalyzer, OutputFormatter outputFormatter) {
-        this.walaAnalyzer = walaAnalyzer;
+    public CallGraphRunner(SootUpAnalyzer sootUpAnalyzer, OutputFormatter outputFormatter) {
+        this.sootUpAnalyzer = sootUpAnalyzer;
         this.outputFormatter = outputFormatter;
     }
 
@@ -133,9 +133,9 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
             logger.info("JDK classes will be excluded from analysis");
         }
 
-        // Perform WALA analysis
+        // Perform SootUp analysis
         try {
-            var result = walaAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm, customEntryPoints, excludeJdk);
+            var result = sootUpAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm, customEntryPoints, excludeJdk);
             
             // Write output in specified format
             if (outputFile != null || format != OutputFormatter.Format.TXT) {
@@ -149,13 +149,13 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
             
         } catch (Exception e) {
             if (!quiet) {
-                logger.error("WALA analysis failed: {}", e.getMessage());
+                logger.error("SootUp analysis failed: {}", e.getMessage());
                 logger.error("Exception type: {}", e.getClass().getSimpleName());
                 if (verbose) {
                     logger.error("Stack trace:", e);
                 }
             }
-            throw new RuntimeException("WALA analysis failed", e);
+            throw new RuntimeException("SootUp analysis failed", e);
         }
     }
 
@@ -198,7 +198,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         }
     }
 
-    private void displayResults(@Nonnull WalaAnalyzer.AnalysisResult result, boolean verbose) {
+    private void displayResults(@Nonnull SootUpAnalyzer.AnalysisResult result, boolean verbose) {
         logger.info("");
         logger.info("=== Call Graph Analysis Results ===");
         
@@ -284,14 +284,14 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
     }
 
     @Nonnull
-    private WalaAnalyzer.Algorithm parseAlgorithm(@Nonnull String algorithmStr) {
+    private SootUpAnalyzer.Algorithm parseAlgorithm(@Nonnull String algorithmStr) {
         return switch (algorithmStr.toLowerCase()) {
-            case "cha" -> WalaAnalyzer.Algorithm.CHA;
-            case "rta" -> WalaAnalyzer.Algorithm.RTA;
-            case "0cfa", "zero-cfa", "zerocfa" -> WalaAnalyzer.Algorithm.ZERO_CFA;
+            case "cha" -> SootUpAnalyzer.Algorithm.CHA;
+            case "rta" -> SootUpAnalyzer.Algorithm.RTA;
+            case "0cfa", "zero-cfa", "zerocfa" -> SootUpAnalyzer.Algorithm.ZERO_CFA;
             default -> {
                 logger.warn("Unknown algorithm '{}', using CHA", algorithmStr);
-                yield WalaAnalyzer.Algorithm.CHA;
+                yield SootUpAnalyzer.Algorithm.CHA;
             }
         };
     }

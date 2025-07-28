@@ -34,16 +34,18 @@ dependencyManagement {
         mavenBom 'org.springframework.boot:spring-boot-dependencies:3.5.4'
     }
     dependencies {
-        dependency 'com.ibm.wala:com.ibm.wala.core:1.6.10'
-        dependency 'com.ibm.wala:com.ibm.wala.util:1.6.10'
-        dependency 'com.ibm.wala:com.ibm.wala.shrike:1.6.10'
+        dependency 'org.soot-oss:sootup.core:2.0.0'
+        dependency 'org.soot-oss:sootup.java.core:2.0.0'
+        dependency 'org.soot-oss:sootup.java.bytecode.frontend:2.0.0'
+        dependency 'org.soot-oss:sootup.callgraph:2.0.0'
     }
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'com.ibm.wala:com.ibm.wala.core'
-    implementation 'com.ibm.wala:com.ibm.wala.util'
-    implementation 'com.ibm.wala:com.ibm.wala.shrike'
+    implementation 'org.soot-oss:sootup.core'
+    implementation 'org.soot-oss:sootup.java.core'
+    implementation 'org.soot-oss:sootup.java.bytecode.frontend'
+    implementation 'org.soot-oss:sootup.callgraph'
     implementation 'jakarta.annotation:jakarta.annotation-api'
 }
