@@ -57,7 +57,7 @@ public class OutputFormatter {
         switch (format) {
             case TXT -> writeTextFormat(writer, result, verbose);
             case CSV -> writeCsvFormat(writer, result, verbose);
-            case DOT -> writeDotFormat(writer, result, verbose);
+            case DOT -> writeDotFormat(writer, result);
         }
     }
 
@@ -162,8 +162,7 @@ public class OutputFormatter {
 
     private void writeDotFormat(
             @Nonnull PrintWriter writer,
-            @Nonnull WalaAnalyzer.AnalysisResult result,
-            boolean verbose
+            @Nonnull WalaAnalyzer.AnalysisResult result
     ) {
         writer.println("digraph CallGraph {");
         writer.println("  rankdir=LR;");

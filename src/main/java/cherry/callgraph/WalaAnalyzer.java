@@ -40,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.jar.JarFile;
 
@@ -53,7 +54,14 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    public AnalysisResult analyzeFiles(@Nonnull List<String> filePaths, boolean verbose, @Nonnull List<String> packageFilters, @Nonnull Algorithm algorithm, @Nonnull List<String> customEntryPoints, boolean excludeJdk) throws IOException, ClassHierarchyException, CallGraphBuilderCancelException {
+    public AnalysisResult analyzeFiles(
+            @Nonnull List<String> filePaths,
+            boolean verbose,
+            @Nonnull List<String> packageFilters,
+            @Nonnull Algorithm algorithm,
+            @Nonnull List<String> customEntryPoints,
+            boolean excludeJdk
+    ) throws IOException, ClassHierarchyException, CallGraphBuilderCancelException {
         logger.info("Initializing WALA analysis for {} files", filePaths.size());
 
         // Create analysis scope
@@ -161,7 +169,11 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    private Iterable<Entrypoint> findEntryPoints(@Nonnull IClassHierarchy classHierarchy, boolean verbose, @Nonnull List<String> customEntryPoints) {
+    private Iterable<Entrypoint> findEntryPoints(
+            @Nonnull IClassHierarchy classHierarchy,
+            boolean verbose,
+            @Nonnull List<String> customEntryPoints
+    ) {
         List<Entrypoint> entrypoints = new ArrayList<>();
 
         if (!customEntryPoints.isEmpty()) {
@@ -220,7 +232,10 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    private List<IMethod> findMethodsBySpec(@Nonnull IClassHierarchy classHierarchy, @Nonnull String entryPointSpec) {
+    private List<IMethod> findMethodsBySpec(
+            @Nonnull IClassHierarchy classHierarchy,
+            @Nonnull String entryPointSpec
+    ) {
         List<IMethod> foundMethods = new ArrayList<>();
 
         // Parse entry point specification: ClassName.methodName or just methodName
@@ -368,7 +383,10 @@ public class WalaAnalyzer {
         return new AnalysisResult(classes, methods, callEdges);
     }
 
-    private boolean matchesPackageFilter(@Nonnull String className, @Nonnull List<String> packageFilters) {
+    private boolean matchesPackageFilter(
+            @Nonnull String className,
+            @Nonnull List<String> packageFilters
+    ) {
         if (packageFilters.isEmpty()) {
             return true;
         }
@@ -450,36 +468,51 @@ public class WalaAnalyzer {
             @Nonnull List<Entrypoint> entrypoints,
             @Nonnull List<String> packageFilters
     ) {
-        // Find all interface implementations in the same package
-        for (IClass clazz : classHierarchy) {
-            String className = clazz.getName().toString();
-
-            // Skip system classes and classes not matching package filter
-            if (!matchesPackageFilter(className, packageFilters)) {
-                continue;
+        // Find interface types referenced in the method's declaring class
+        IClass declaringClass = method.getDeclaringClass();
+        
+        // Collect interface types used by the declaring class
+        var referencedInterfaces = new HashSet<IClass>();
+        
+        // Add directly implemented interfaces
+        for (IClass directInterface : declaringClass.getDirectInterfaces()) {
+            if (matchesPackageFilter(directInterface.getName().toString(), packageFilters)) {
+                referencedInterfaces.add(directInterface);
+                logger.debug("Found direct interface: {} used by {}", 
+                    directInterface.getName(), declaringClass.getName());
             }
-
-            // Check if this is a concrete implementation class (not interface, not abstract)
-            if (!clazz.isInterface() && !clazz.isAbstract()) {
-                // Check if this class implements any interfaces
-                boolean implementsInterface = false;
-                for (IClass interfaceClass : clazz.getDirectInterfaces()) {
-                    if (matchesPackageFilter(interfaceClass.getName().toString(), packageFilters)) {
-                        implementsInterface = true;
-                        logger.debug("Found implementation class: {} implements {}", className, interfaceClass.getName());
-                        break;
-                    }
+        }
+        
+        // Add interfaces from all implemented interfaces (including inherited)
+        for (IClass implementedInterface : declaringClass.getAllImplementedInterfaces()) {
+            if (matchesPackageFilter(implementedInterface.getName().toString(), packageFilters)) {
+                referencedInterfaces.add(implementedInterface);
+                logger.debug("Found implemented interface: {} used by {}", 
+                    implementedInterface.getName(), declaringClass.getName());
+            }
+        }
+        
+        // For each referenced interface, find and add concrete implementations
+        for (IClass interfaceClass : referencedInterfaces) {
+            for (IClass implementationClass : classHierarchy.getImplementors(interfaceClass.getReference())) {
+                String implClassName = implementationClass.getName().toString();
+                
+                // Skip system classes and classes not matching package filter
+                if (!matchesPackageFilter(implClassName, packageFilters)) {
+                    continue;
                 }
-
-                if (implementsInterface) {
+                
+                // Only add concrete implementation classes (not interfaces, not abstract)
+                if (!implementationClass.isInterface() && !implementationClass.isAbstract()) {
                     // Add all public methods of the implementation as entry points
-                    for (IMethod implMethod : clazz.getDeclaredMethods()) {
+                    for (IMethod implMethod : implementationClass.getDeclaredMethods()) {
                         if (implMethod.isPublic() && !implMethod.isAbstract() &&
                                 !implMethod.isInit() && !implMethod.isClinit()) {
-
+                            
                             Entrypoint newEntrypoint = new DefaultEntrypoint(implMethod, classHierarchy);
                             entrypoints.add(newEntrypoint);
-                            logger.debug("Added implementation method: {}.{}", className, implMethod.getName());
+                            logger.debug("Added implementation method: {}.{} for interface {}", 
+                                implClassName, implMethod.getName(), interfaceClass.getName());
                         }
                     }
                 }
@@ -488,7 +521,7 @@ public class WalaAnalyzer {
     }
 
     @Nonnull
-    private com.ibm.wala.ipa.callgraph.CallGraphBuilder<InstanceKey> createCallGraphBuilder(
+    private CallGraphBuilder<InstanceKey> createCallGraphBuilder(
             @Nonnull Algorithm algorithm,
             @Nonnull AnalysisOptions options,
             @Nonnull IAnalysisCacheView cache,
