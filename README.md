@@ -2,14 +2,14 @@
 
 [![Java Version](https://img.shields.io/badge/Java-21-orange)](https://openjdk.java.net/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.4-brightgreen)](https://spring.io/projects/spring-boot)
-[![WALA](https://img.shields.io/badge/WALA-1.6.10-blue)](https://wala.sourceforge.io/)
+[![SootUp](https://img.shields.io/badge/SootUp-2.0.0-blue)](https://github.com/soot-oss/SootUp)
 [![Gradle](https://img.shields.io/badge/Gradle-8.14.3-brightgreen)](https://gradle.org/)
 
-A sophisticated command-line tool for static call graph analysis of Java applications using IBM's WALA (Watson Libraries for Analysis) framework and Spring Boot.
+A sophisticated command-line tool for static call graph analysis of Java applications using SootUp 2.0.0 framework and Spring Boot.
 
 ## Features
 
-- **Multiple Analysis Algorithms**: CHA (Class Hierarchy Analysis), RTA (Rapid Type Analysis), and 0-CFA
+- **Multiple Analysis Algorithms**: CHA (Class Hierarchy Analysis) and RTA (Rapid Type Analysis)
 - **Interface Call Resolution**: Automatic detection and expansion of interface implementations for Spring DI pattern analysis
 - **Package Filtering**: Focus analysis on specific packages while excluding JDK classes
 - **Custom Entry Points**: Support for specifying custom methods as analysis starting points
@@ -67,8 +67,8 @@ java -jar build/libs/java-call-graph-*.jar your-application.jar
 # Use RTA algorithm (recommended for interface resolution)
 ./gradlew bootRun --args="--algorithm=rta --package=com.example application.jar"
 
-# Use 0-CFA for more precise analysis
-./gradlew bootRun --args="--algorithm=0cfa application.jar"
+# Use CHA algorithm (faster but less precise)
+./gradlew bootRun --args="--algorithm=cha application.jar"
 ```
 
 ### Custom Entry Points
@@ -94,7 +94,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--algorithm=<algo>` | Analysis algorithm: `cha`, `rta`, `0cfa` | `cha` |
+| `--algorithm=<algo>` | Analysis algorithm: `cha`, `rta` | `cha` |
 | `--entry=<method>` | Entry point method (ClassName.methodName format) | main methods |
 | `--package=<package>` | Filter by package name (comma-separated) | all packages |
 | `--exclude-jdk` | Exclude JDK classes from analysis | `false` |
@@ -110,16 +110,16 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 - **Main.java**: Spring Boot CLI entry point with proper context management
 - **CallGraphRunner.java**: CLI argument processing and analysis orchestration  
-- **WalaAnalyzer.java**: WALA integration and call graph analysis engine
+- **SootUpAnalyzer.java**: SootUp integration and call graph analysis engine
 - **OutputFormatter.java**: Multi-format output generation (TXT, CSV, DOT)
 
 ### Analysis Engine
 
-Built on IBM WALA 1.6.10 with sophisticated features:
+Built on SootUp 2.0.0 with sophisticated features:
 
 - **Static Analysis**: Multiple algorithms for different precision/performance trade-offs
 - **Interface Resolution**: Automatic detection of interface implementations for Spring DI patterns
-- **Scope Management**: Proper WALA scope configuration with system library exclusions
+- **View Management**: Proper SootUp JavaView configuration with input locations
 - **Entry Point Handling**: Automatic main method detection and custom entry point support
 
 ## Supported Input Types
@@ -172,7 +172,7 @@ digraph CallGraph {
 The tool includes sophisticated interface call resolution for Spring Dependency Injection patterns:
 
 - **Precise Interface Analysis**: Identifies interfaces used by entry point classes
-- **Implementation Detection**: Finds all concrete implementations using WALA's class hierarchy
+- **Implementation Detection**: Finds all concrete implementations using SootUp's class hierarchy
 - **Entry Point Expansion**: Adds interface implementations as additional entry points
 - **Algorithm Recommendation**: Use RTA algorithm (`--algorithm=rta`) for better interface resolution
 
@@ -191,10 +191,11 @@ Example for Spring applications:
 ## Dependencies
 
 - **Spring Boot 3.5.4**: Core framework and CLI infrastructure
-- **IBM WALA 1.6.10**: Static analysis engine
-  - `com.ibm.wala.core`: Core analysis functionality
-  - `com.ibm.wala.util`: Utility classes
-  - `com.ibm.wala.shrike`: Bytecode analysis
+- **SootUp 2.0.0**: Static analysis engine
+  - `sootup.core`: Core analysis functionality
+  - `sootup.java.core`: Java-specific classes
+  - `sootup.java.bytecode.frontend`: Bytecode frontend
+  - `sootup.callgraph`: Call graph algorithms
 - **Jakarta Annotations**: Standard annotations support
 
 ## Development
@@ -224,7 +225,7 @@ Test the tool on itself:
 ## Code Quality Standards
 
 - Java 21 language features (records, switch expressions, var)
-- Modern WALA APIs (non-deprecated methods)
+- Modern SootUp APIs (2.0.0 compatible methods)
 - Enhanced for-loops over iterators
 - Proper resource management with try-with-resources
 - Comprehensive error handling and logging
