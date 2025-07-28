@@ -13,7 +13,7 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and WALA (
 - **Package Filtering**: Focus analysis on specific packages while excluding JDK classes
 - **Custom Entry Points**: Support for specifying custom methods as analysis starting points
 - **Flexible Input**: Supports JAR files, class files, and directories
-- **Text Output Format**: Human-readable call graph output (TXT format implemented)
+- **Multiple Output Formats**: TXT, CSV, and DOT formats for different use cases
 - **Spring Boot CLI**: Professional command-line interface with proper exit code handling
 
 ## Architecture
@@ -87,8 +87,8 @@ src/main/resources/
 - `--exclude-jdk`: Exclude JDK classes from analysis (default: false)
 - `--quiet`: Suppress standard output
 - `--verbose`: Show detailed information
-- `--output=<file>`: Output file for call graph (PENDING - currently stdout only)
-- `--format=<format>`: Output format: txt, csv, dot (PENDING - currently txt only)
+- `--output=<file>`: Output file for call graph (default: stdout)
+- `--format=<format>`: Output format: txt, csv, dot (default: txt)
 - `--help`: Show help message (PENDING)
 
 ## Key Dependencies
@@ -122,8 +122,18 @@ src/main/resources/
 ## Output Formats
 
 **TXT Format**: Human-readable text output with call edges and class listings (IMPLEMENTED)
-**CSV Format**: Structured data with headers for spreadsheet analysis (PENDING)
-**DOT Format**: Graphviz-compatible format for visual call graph generation (PENDING)
+**CSV Format**: Structured data with headers for spreadsheet analysis (IMPLEMENTED)
+**DOT Format**: Graphviz-compatible format for visual call graph generation (IMPLEMENTED)
+
+Usage examples:
+```bash
+# CSV format for data analysis
+./gradlew bootRun --args="--format=csv --output=callgraph.csv application.jar"
+
+# DOT format for visualization with Graphviz
+./gradlew bootRun --args="--format=dot --output=callgraph.dot application.jar"
+dot -Tpng callgraph.dot -o callgraph.png
+```
 
 ## Logging Configuration
 
@@ -138,6 +148,8 @@ src/main/resources/
 - Enhanced for-loops over iterators
 - Proper resource management with try-with-resources
 - Comprehensive error handling and logging
+- Import statements preferred over FQCN usage
+- Unused method parameters should be removed
 
 ## Testing
 
@@ -153,8 +165,9 @@ Expected output: Call graph showing Main.main -> Main.doMain relationship along 
 
 The application includes sophisticated interface call resolution for Spring Dependency Injection patterns:
 
-- **Automatic Implementation Detection**: `expandEntryPointsWithImplementations()` method in `WalaAnalyzer.java:424-445`
-- **Interface Implementation Mapping**: `addImplementationsForInterfaces()` method in `WalaAnalyzer.java:447-488`
+- **Precise Interface Analysis**: `addImplementationsForInterfaces()` method identifies interfaces used by entry point classes and adds their concrete implementations as additional entry points
+- **Implementation Detection**: Uses WALA's `getImplementors()` to find all concrete implementations of interfaces
+- **Entry Point Expansion**: `expandEntryPointsWithImplementations()` method in `WalaAnalyzer.java:441-462`
 - **Algorithm Recommendation**: Use RTA algorithm (`--algorithm=rta`) for better interface call resolution
 - **Package Filtering Integration**: Interface resolution respects package filters for focused analysis
 
@@ -170,15 +183,12 @@ Example usage for Spring applications:
 
 **COMPLETED Features:**
 - Core call graph analysis with multiple algorithms (CHA, RTA, 0-CFA)
-- Interface call resolution for Spring DI patterns
+- Precise interface call resolution for Spring DI patterns
 - Package filtering and JDK exclusion
 - Custom entry point specification
-- Text output format
-- Comprehensive logging and error handling
-
-**PENDING Features (Medium Priority):**
-- Multiple output formats (CSV, DOT) 
+- Multiple output formats (TXT, CSV, DOT)
 - Output file option (--output=<file>)
+- Comprehensive logging and error handling
 
 **PENDING Features (Low Priority):**
 - WAR file support
