@@ -77,7 +77,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         logger.info("Options:");
         logger.info("  --output=<file>        Output file for call graph (default: stdout)");
         logger.info("  --format=<format>      Output format: txt, csv, dot (default: txt)");
-        logger.info("  --algorithm=<algo>     Algorithm: cha, rta, 0cfa (default: cha)");
+        logger.info("  --algorithm=<algo>     Algorithm: cha, rta (default: cha)");
         logger.info("  --entry=<method>       Entry point method (default: main methods)");
         logger.info("  --package=<package>    Filter by package name");
         logger.info("  --exclude-jdk          Exclude JDK classes from analysis");
@@ -288,9 +288,8 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         return switch (algorithmStr.toLowerCase()) {
             case "cha" -> SootUpAnalyzer.Algorithm.CHA;
             case "rta" -> SootUpAnalyzer.Algorithm.RTA;
-            case "0cfa", "zero-cfa", "zerocfa" -> SootUpAnalyzer.Algorithm.ZERO_CFA;
             default -> {
-                logger.warn("Unknown algorithm '{}', using CHA", algorithmStr);
+                logger.warn("Unknown algorithm '{}', using CHA. Supported: cha, rta", algorithmStr);
                 yield SootUpAnalyzer.Algorithm.CHA;
             }
         };

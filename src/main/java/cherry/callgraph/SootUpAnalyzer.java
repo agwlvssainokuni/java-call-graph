@@ -44,7 +44,7 @@ public class SootUpAnalyzer {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public enum Algorithm {
-        CHA, RTA, ZERO_CFA
+        CHA, RTA
     }
 
     @Nonnull
@@ -276,7 +276,6 @@ public class SootUpAnalyzer {
         CallGraphAlgorithm callGraphAlgorithm = switch (algorithm) {
             case CHA -> new ClassHierarchyAnalysisAlgorithm(view);
             case RTA -> new RapidTypeAnalysisAlgorithm(view);
-            case ZERO_CFA -> new ClassHierarchyAnalysisAlgorithm(view); // Fallback to CHA for now
         };
 
         return callGraphAlgorithm.initialize(entryPoints);
