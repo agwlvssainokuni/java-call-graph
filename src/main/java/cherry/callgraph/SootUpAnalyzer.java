@@ -27,7 +27,6 @@ import sootup.callgraph.RapidTypeAnalysisAlgorithm;
 import sootup.core.inputlocation.AnalysisInputLocation;
 import sootup.core.model.SootMethod;
 import sootup.core.signatures.MethodSignature;
-import sootup.core.types.ClassType;
 import sootup.java.bytecode.frontend.inputlocation.JavaClassPathAnalysisInputLocation;
 import sootup.java.core.JavaSootClass;
 import sootup.java.core.views.JavaView;
@@ -35,7 +34,8 @@ import sootup.java.core.views.JavaView;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -213,10 +213,9 @@ public class SootUpAnalyzer {
 
         // For each original entry point, find interface implementations
         for (MethodSignature entryPoint : originalEntryPoints) {
-            Optional<JavaSootClass> entryClass = view.getClass(entryPoint.getDeclClassType());
-            if (entryClass.isPresent()) {
-                addImplementationsForInterfaces(view, entryClass.get(), expandedEntryPoints, packageFilters);
-            }
+            view.getClass(entryPoint.getDeclClassType()).ifPresent(entryClass ->
+                    addImplementationsForInterfaces(view, entryClass, expandedEntryPoints, packageFilters)
+            );
         }
 
         logger.debug("Expanded to {} total entry points", expandedEntryPoints.size());
@@ -229,42 +228,24 @@ public class SootUpAnalyzer {
             @Nonnull List<MethodSignature> entryPoints,
             @Nonnull List<String> packageFilters
     ) {
-        // Find interfaces implemented by the declaring class
-        Set<ClassType> referencedInterfaces = new HashSet<>();
-
-        // Add directly implemented interfaces
-        referencedInterfaces.addAll(declaringClass.getInterfaces());
-
-        // For each referenced interface, find concrete implementations
-        for (ClassType interfaceType : referencedInterfaces) {
-            if (!matchesPackageFilter(interfaceType.getFullyQualifiedName(), packageFilters)) {
-                continue;
-            }
-
-            Optional<JavaSootClass> interfaceClass = view.getClass(interfaceType);
-            if (interfaceClass.isPresent() && interfaceClass.get().isInterface()) {
-                // Find all classes that implement this interface
-                var classes = view.getClasses().collect(Collectors.toList());
-                for (JavaSootClass sootClass : classes) {
-                    if (!sootClass.isInterface() && !sootClass.isAbstract() &&
-                            matchesPackageFilter(sootClass.getName(), packageFilters)) {
-
-                        if (sootClass.getInterfaces().contains(interfaceType)) {
-                            // Add public methods of implementation as entry points
-                            for (SootMethod method : sootClass.getMethods()) {
-                                if (method.isPublic() && !method.isAbstract() &&
-                                        !method.getName().equals("<init>") && !method.getName().equals("<clinit>")) {
-
-                                    entryPoints.add(method.getSignature());
-                                    logger.debug("Added implementation method: {} for interface {}",
-                                            method.getSignature(), interfaceType.getClassName());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // Find interfaces implemented by the declaring class and process with Stream API
+        declaringClass.getInterfaces().stream()
+                .filter(interfaceType -> matchesPackageFilter(interfaceType.getFullyQualifiedName(), packageFilters))
+                .filter(interfaceType -> view.getClass(interfaceType)
+                        .filter(JavaSootClass::isInterface).isPresent())
+                .flatMap(interfaceType -> view.getClasses()
+                        .filter(sootClass -> !sootClass.isInterface() &&
+                                !sootClass.isAbstract() &&
+                                matchesPackageFilter(sootClass.getName(), packageFilters) &&
+                                sootClass.getInterfaces().contains(interfaceType))
+                        .flatMap(sootClass -> sootClass.getMethods().stream()
+                                .filter(method -> method.isPublic() &&
+                                        !method.isAbstract() &&
+                                        !method.getName().equals("<init>") &&
+                                        !method.getName().equals("<clinit>"))
+                                .peek(method -> logger.debug("Added implementation method: {} for interface {}",
+                                        method.getSignature(), interfaceType.getFullyQualifiedName()))))
+                .forEach(method -> entryPoints.add(method.getSignature()));
     }
 
     @Nonnull
