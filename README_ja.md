@@ -150,22 +150,22 @@ SootUp 2.0.0上に構築された高機能な機能:
 === Call Graph Analysis Results ===
 
 Call Graph (5 edges):
-  Lcom/example/Main.main -> Lcom/example/Service.process
-  Lcom/example/Service.process -> Lcom/example/Repository.save
+  com.example.Main.main -> com.example.Service.process
+  com.example.Service.process -> com.example.Repository.save
   ...
 
 Classes (3):
-  Lcom/example/Main
-  Lcom/example/Service
-  Lcom/example/Repository
+  com.example.Main
+  com.example.Service
+  com.example.Repository
 ```
 
 ### CSV形式
 スプレッドシート解析に適した構造化データ:
 ```csv
 source_class,source_method,target_class,target_method
-"Lcom/example/Main","main","Lcom/example/Service","process"
-"Lcom/example/Service","process","Lcom/example/Repository","save"
+"com.example.Main","main","com.example.Service","process"
+"com.example.Service","process","com.example.Repository","save"
 ```
 
 ### DOT形式

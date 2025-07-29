@@ -150,22 +150,22 @@ Human-readable text output showing call edges and class information:
 === Call Graph Analysis Results ===
 
 Call Graph (5 edges):
-  Lcom/example/Main.main -> Lcom/example/Service.process
-  Lcom/example/Service.process -> Lcom/example/Repository.save
+  com.example.Main.main -> com.example.Service.process
+  com.example.Service.process -> com.example.Repository.save
   ...
 
 Classes (3):
-  Lcom/example/Main
-  Lcom/example/Service
-  Lcom/example/Repository
+  com.example.Main
+  com.example.Service
+  com.example.Repository
 ```
 
 ### CSV Format
 Structured data suitable for spreadsheet analysis:
 ```csv
 source_class,source_method,target_class,target_method
-"Lcom/example/Main","main","Lcom/example/Service","process"
-"Lcom/example/Service","process","Lcom/example/Repository","save"
+"com.example.Main","main","com.example.Service","process"
+"com.example.Service","process","com.example.Repository","save"
 ```
 
 ### DOT Format
