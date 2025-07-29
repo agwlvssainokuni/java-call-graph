@@ -21,7 +21,12 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and SootUp
 **Framework**: Spring Boot 3.5.4 CLI application
 - Entry point: `cherry.callgraph.Main` class with Spring Boot context management
 - CLI pattern: Uses `ApplicationRunner` and `ExitCodeGenerator` for proper CLI behavior
-- Package structure: `cherry.callgraph` as base package
+- Package structure: `cherry.callgraph` as base package with modular sub-packages
+
+**Interface-Based Design**: Clean separation of concerns
+- `cherry.callgraph.analyzer`: Core analysis interfaces and data transfer objects
+- `cherry.callgraph.sootup`: SootUp-specific implementation
+- Dependency injection: Spring Boot manages interface-to-implementation binding
 
 **Analysis Engine**: SootUp 2.0.0 integration
 - Static analysis: Multiple algorithms (CHA, RTA) for call graph construction
@@ -43,12 +48,18 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and SootUp
 src/main/java/cherry/callgraph/
 ├── Main.java                    # Spring Boot CLI entry point
 ├── CallGraphRunner.java         # CLI argument processing and analysis orchestration
-├── SootUpAnalyzer.java         # SootUp integration and call graph analysis
-└── OutputFormatter.java        # Multi-format output generation
+├── OutputFormatter.java        # Multi-format output generation
+├── analyzer/                    # Analysis interface and data objects
+│   ├── CallGraphAnalyzer.java   # Core analysis interface
+│   ├── AnalysisResult.java      # Analysis result data
+│   ├── ClassInfo.java           # Class information record
+│   ├── MethodInfo.java          # Method information record
+│   └── CallEdgeInfo.java        # Call edge information record
+└── sootup/                      # SootUp-specific implementation
+    └── SootUpAnalyzer.java      # SootUp integration and call graph analysis
 
 src/main/resources/
-├── application.properties       # Spring Boot configuration
-└── application.properties       # SootUp logging configuration
+├── application.properties       # Spring Boot configuration and logging
 ```
 
 ## Development Commands
@@ -147,6 +158,8 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 - Console output: Message-only format (`%msg%n`)
 - Log levels: WARN for most components, INFO for CallGraphRunner and SootUpAnalyzer
+- SootUp warnings: Suppressed with `logging.level.sootup=ERROR`
+- Package-specific: `cherry.callgraph.sootup.SootUpAnalyzer=INFO` for implementation logging
 - Spring Boot banner: Disabled for clean CLI output
 
 ## Code Quality Standards
@@ -194,6 +207,7 @@ Example usage:
 **COMPLETED Features:**
 - Core call graph analysis with multiple algorithms (CHA, RTA)
 - SootUp 2.0.0 integration with automatic interface call resolution
+- Interface-based architecture with clean separation of analysis interface and SootUp implementation
 - Package filtering and FQCN-based class exclusion (`--exclude=<class>`)
 - Custom entry point specification
 - Multiple output formats (TXT, CSV, DOT)
@@ -203,6 +217,7 @@ Example usage:
 - Stream API implementation for functional programming style
 - Proper SootUp Call API usage (`getSourceMethodSignature()`, `getTargetMethodSignature()`)
 - CallEdgeInfo properties aligned with SootUp naming (source/target instead of caller/target)
+- Modular package structure: `analyzer` for interfaces/DTOs, `sootup` for implementation
 
 **PENDING Features (Low Priority):**
 - WAR file support

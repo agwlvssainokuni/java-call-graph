@@ -121,8 +121,16 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 - **Main.java**: 適切なコンテキスト管理を持つSpring Boot CLIエントリポイント
 - **CallGraphRunner.java**: CLI引数処理と解析オーケストレーション
-- **SootUpAnalyzer.java**: SootUp統合とコールグラフ解析エンジン
 - **OutputFormatter.java**: 複数形式出力生成（TXT、CSV、DOT）
+
+### インタフェースベースアーキテクチャ
+
+- **analyzer/** パッケージ: コア解析インタフェースとデータ転送オブジェクト
+  - `CallGraphAnalyzer.java`: 契約を定義する解析インタフェース
+  - `AnalysisResult.java`, `ClassInfo.java`, `MethodInfo.java`, `CallEdgeInfo.java`: データレコード
+- **sootup/** パッケージ: SootUp固有の実装
+  - `SootUpAnalyzer.java`: SootUp統合とコールグラフ解析エンジン
+- **依存性注入**: Spring Bootがインタフェースから実装への結合を管理
 
 ### 解析エンジン
 
@@ -163,7 +171,7 @@ Classes (3):
 ### CSV形式
 スプレッドシート解析に適した構造化データ:
 ```csv
-source_class,source_method,target_class,target_method
+caller_class,caller_method,target_class,target_method
 "com.example.Main","main","com.example.Service","process"
 "com.example.Service","process","com.example.Repository","save"
 ```

@@ -45,6 +45,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Nonnull
+    @Override
     public AnalysisResult analyzeFiles(
             @Nonnull List<String> filePaths,
             boolean verbose,
