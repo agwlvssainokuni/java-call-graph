@@ -52,6 +52,7 @@ public class SootUpAnalyzer {
             @Nonnull List<String> filePaths,
             boolean verbose,
             @Nonnull List<String> packageFilters,
+            @Nonnull List<String> excludeClasses,
             @Nonnull Algorithm algorithm,
             @Nonnull List<String> customEntryPoints,
             boolean excludeJdk
@@ -70,7 +71,7 @@ public class SootUpAnalyzer {
 
         // Find entry points
         logger.info("Finding entry points...");
-        List<MethodSignature> entryPoints = findEntryPoints(view, verbose, customEntryPoints, packageFilters);
+        List<MethodSignature> entryPoints = findEntryPoints(view, verbose, customEntryPoints, packageFilters, excludeClasses);
 
         // Build call graph using specified algorithm
         logger.info("Building call graph with {}...", algorithm);
@@ -81,7 +82,7 @@ public class SootUpAnalyzer {
         }
 
         // Collect analysis results
-        var result = collectAnalysisResults(view, callGraph, verbose, packageFilters, excludeJdk);
+        var result = collectAnalysisResults(view, callGraph, verbose, packageFilters, excludeClasses, excludeJdk);
 
         logger.info("Analysis completed: {} classes, {} methods, {} call edges found",
                 result.classes().size(), result.methods().size(), result.callEdges().size());
@@ -120,7 +121,8 @@ public class SootUpAnalyzer {
             @Nonnull JavaView view,
             boolean verbose,
             @Nonnull List<String> customEntryPoints,
-            @Nonnull List<String> packageFilters
+            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> excludeClasses
     ) {
         List<MethodSignature> entryPoints;
 
@@ -128,7 +130,7 @@ public class SootUpAnalyzer {
             // Use custom entry points
             entryPoints = customEntryPoints.stream()
                     .flatMap(entryPointSpec -> {
-                        var foundMethods = findMethodsBySpec(view, entryPointSpec, packageFilters);
+                        var foundMethods = findMethodsBySpec(view, entryPointSpec, packageFilters, excludeClasses);
                         if (verbose) {
                             foundMethods.forEach(method -> logger.info("Found custom entry point: {}", method));
                         }
@@ -138,7 +140,7 @@ public class SootUpAnalyzer {
         } else {
             // Find main methods
             entryPoints = view.getClasses()
-                    .filter(sootClass -> matchesPackageFilter(sootClass.getName(), packageFilters))
+                    .filter(sootClass -> matchesClassFilter(sootClass.getName(), packageFilters, excludeClasses))
                     .flatMap(sootClass -> sootClass.getMethods().stream())
                     .filter(method -> method.getName().equals("main") &&
                             method.isStatic() &&
@@ -170,7 +172,8 @@ public class SootUpAnalyzer {
     private List<MethodSignature> findMethodsBySpec(
             @Nonnull JavaView view,
             @Nonnull String entryPointSpec,
-            @Nonnull List<String> packageFilters
+            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> excludeClasses
     ) {
         // Parse entry point specification: ClassName.methodName or just methodName
         final String className;
@@ -186,7 +189,7 @@ public class SootUpAnalyzer {
         }
 
         return view.getClasses()
-                .filter(sootClass -> matchesPackageFilter(sootClass.getName(), packageFilters))
+                .filter(sootClass -> matchesClassFilter(sootClass.getName(), packageFilters, excludeClasses))
                 .filter(sootClass -> {
                     if (className == null) {
                         return true;
@@ -220,6 +223,7 @@ public class SootUpAnalyzer {
             @Nonnull CallGraph callGraph,
             boolean verbose,
             @Nonnull List<String> packageFilters,
+            @Nonnull List<String> excludeClasses,
             boolean excludeJdk
     ) {
         List<ClassInfo> classes = new ArrayList<>();
@@ -230,8 +234,8 @@ public class SootUpAnalyzer {
         view.getClasses()
                 .filter(sootClass -> !(excludeJdk && isJdkClass(sootClass.getName())))
                 .filter(sootClass -> {
-                    boolean matches = matchesPackageFilter(sootClass.getName(), packageFilters);
-                    if (verbose && !packageFilters.isEmpty() && !matches) {
+                    boolean matches = matchesClassFilter(sootClass.getName(), packageFilters, excludeClasses);
+                    if (verbose && (!packageFilters.isEmpty() || !excludeClasses.isEmpty()) && !matches) {
                         logger.debug("Filtered out class: {}", sootClass.getName());
                     }
                     return matches;
@@ -262,13 +266,13 @@ public class SootUpAnalyzer {
                             MethodSignature source = call.getSourceMethodSignature();
                             String sourceClass = source.getDeclClassType().getFullyQualifiedName();
                             return !(excludeJdk && isJdkClass(sourceClass)) &&
-                                    matchesPackageFilter(sourceClass, packageFilters);
+                                    matchesClassFilter(sourceClass, packageFilters, excludeClasses);
                         })
                         .filter(call -> {
                             MethodSignature target = call.getTargetMethodSignature();
                             String targetClass = target.getDeclClassType().getFullyQualifiedName();
                             return !(excludeJdk && isJdkClass(targetClass)) &&
-                                    matchesPackageFilter(targetClass, packageFilters);
+                                    matchesClassFilter(targetClass, packageFilters, excludeClasses);
                         })
                         .forEach(call -> {
                             MethodSignature source = call.getSourceMethodSignature();
@@ -300,15 +304,24 @@ public class SootUpAnalyzer {
         return new AnalysisResult(classes, methods, callEdges);
     }
 
-    private boolean matchesPackageFilter(
+    private boolean matchesClassFilter(
             @Nonnull String className,
-            @Nonnull List<String> packageFilters
+            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> excludeClasses
     ) {
+        // Check if class matches any exclude filter first (FQCN prefix match)
+        for (String excludeFilter : excludeClasses) {
+            if (className.startsWith(excludeFilter)) {
+                return false;
+            }
+        }
+
+        // If no package include filters specified, include all (except excluded)
         if (packageFilters.isEmpty()) {
             return true;
         }
 
-        // Extract package part (remove class name)
+        // Extract package part for package filtering
         String packageName = className;
         int lastDot = packageName.lastIndexOf(".");
         if (lastDot > 0) {
@@ -318,7 +331,7 @@ public class SootUpAnalyzer {
             packageName = "";
         }
 
-        // Check if package matches any filter
+        // Check if package matches any include filter
         for (String filter : packageFilters) {
             if (packageName.startsWith(filter)) {
                 return true;

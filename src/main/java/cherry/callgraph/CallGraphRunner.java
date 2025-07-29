@@ -80,6 +80,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         logger.info("  --algorithm=<algo>     Algorithm: cha, rta (default: cha)");
         logger.info("  --entry=<method>       Entry point method (default: main methods)");
         logger.info("  --package=<package>    Filter by package name");
+        logger.info("  --exclude=<class>      Exclude classes by FQCN prefix");
         logger.info("  --exclude-jdk          Exclude JDK classes from analysis");
         logger.info("  --quiet                Suppress standard output");
         logger.info("  --verbose              Show detailed information");
@@ -110,8 +111,12 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
         // Parse package filters
         var packageFilters = parsePackageFilters(args);
+        var excludeClasses = parseExcludeClasses(args);
         if (!quiet && !packageFilters.isEmpty()) {
             logger.info("Package filters: {}", String.join(", ", packageFilters));
+        }
+        if (!quiet && !excludeClasses.isEmpty()) {
+            logger.info("Exclude classes: {}", String.join(", ", excludeClasses));
         }
 
         // Parse algorithm
@@ -135,7 +140,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
         // Perform SootUp analysis
         try {
-            var result = sootUpAnalyzer.analyzeFiles(files, verbose, packageFilters, algorithm, customEntryPoints, excludeJdk);
+            var result = sootUpAnalyzer.analyzeFiles(files, verbose, packageFilters, excludeClasses, algorithm, customEntryPoints, excludeJdk);
 
             // Write output in specified format
             if (outputFile != null || format != OutputFormatter.Format.TXT) {
@@ -281,6 +286,28 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         }
 
         return filters;
+    }
+
+    @Nonnull
+    private List<String> parseExcludeClasses(@Nonnull ApplicationArguments args) {
+        var excludeOptions = args.getOptionValues("exclude");
+        if (excludeOptions == null || excludeOptions.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> excludes = new ArrayList<>();
+        for (String excludeOption : excludeOptions) {
+            // Split by comma to support multiple classes in one option
+            String[] classes = excludeOption.split(",");
+            for (String cls : classes) {
+                String trimmed = cls.trim();
+                if (!trimmed.isEmpty()) {
+                    excludes.add(trimmed);
+                }
+            }
+        }
+
+        return excludes;
     }
 
     @Nonnull
