@@ -14,7 +14,7 @@ SootUp 2.0.0フレームワークとSpring Bootを使用したJavaアプリケ�
 - **柔軟なフィルタリング**: パッケージベースの包含とFQCNベースのクラス除外
 - **カスタムエントリポイント**: 解析開始点としてカスタムメソッドを指定可能
 - **柔軟な入力サポート**: JARファイル、クラスファイル、ディレクトリ
-- **複数の出力形式**: TXT（人間可読）、CSV（データ解析）、DOT（可視化）
+- **複数の出力形式**: TXT（人間可読）、CSV（データ解析）、JSON（プログラム処理）、DOT（可視化）
 - **重複除去**: 挿入順序を維持しながらコールエッジの重複を除去
 - **プロフェッショナルCLI**: Spring Bootで構築された堅牢なコマンドラインインタフェース
 
@@ -110,7 +110,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 | `--exclude=<class>` | FQCN前置詞でクラスを除外（カンマ区切り） | なし |
 | `--exclude-jdk` | JDKクラスを解析から除外 | `false` |
 | `--output=<file>` | コールグラフの出力ファイル | 標準出力 |
-| `--format=<format>` | 出力形式: `txt`, `csv`, `dot` | `txt` |
+| `--format=<format>` | 出力形式: `txt`, `csv`, `json`, `dot` | `txt` |
 | `--quiet` | 標準出力を抑制 | `false` |
 | `--verbose` | 詳細情報を表示 | `false` |
 | `--help` | ヘルプメッセージを表示 | - |
@@ -121,13 +121,18 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 - **Main.java**: 適切なコンテキスト管理を持つSpring Boot CLIエントリポイント
 - **CallGraphRunner.java**: CLI引数処理と解析オーケストレーション
-- **OutputFormatter.java**: 複数形式出力生成（TXT、CSV、DOT）
+- **output/OutputFormatter.java**: 複数形式出力生成（TXT、CSV、JSON、DOT）
+- **output/Format.java**: 出力形式enum
 
 ### インタフェースベースアーキテクチャ
 
-- **analyzer/** パッケージ: コア解析インタフェースとデータ転送オブジェクト
+- **analyze/** パッケージ: コア解析インタフェースとデータ転送オブジェクト
   - `CallGraphAnalyzer.java`: 契約を定義する解析インタフェース
+  - `Algorithm.java`: 解析アルゴリズムenum
   - `AnalysisResult.java`, `ClassInfo.java`, `MethodInfo.java`, `CallEdgeInfo.java`: データレコード
+- **output/** パッケージ: 出力フォーマットと形式定義
+  - `OutputFormatter.java`: 複数形式出力生成
+  - `Format.java`: 出力形式enum
 - **sootup/** パッケージ: SootUp固有の実装
   - `SootUpAnalyzer.java`: SootUp統合とコールグラフ解析エンジン
 - **依存性注入**: Spring Bootがインタフェースから実装への結合を管理

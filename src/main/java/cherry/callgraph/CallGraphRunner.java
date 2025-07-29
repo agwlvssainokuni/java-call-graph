@@ -81,7 +81,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         logger.info("Usage: java -jar java-call-graph.jar [options] <file|directory>...");
         logger.info("Options:");
         logger.info("  --output=<file>        Output file for call graph (default: stdout)");
-        logger.info("  --format=<format>      Output format: txt, csv, dot (default: txt)");
+        logger.info("  --format=<format>      Output format: txt, csv, json, dot (default: txt)");
         logger.info("  --algorithm=<algo>     Algorithm: cha, rta (default: cha)");
         logger.info("  --entry=<method>       Entry point method (default: main methods)");
         logger.info("  --package=<package>    Filter by package name");
@@ -259,26 +259,18 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         return values != null && !values.isEmpty() ? values.getFirst() : defaultValue;
     }
 
+    @Nonnull
     private Format parseOutputFormat(@Nonnull String formatStr) {
         return switch (formatStr.toLowerCase()) {
             case "txt", "text" -> Format.TXT;
             case "csv" -> Format.CSV;
+            case "json" -> Format.JSON;
             case "dot", "graphviz" -> Format.DOT;
             default -> {
                 logger.warn("Unknown output format '{}', using TXT format", formatStr);
                 yield Format.TXT;
             }
         };
-    }
-
-    @Nonnull
-    private List<String> parsePackageFilters(@Nonnull ApplicationArguments args) {
-        return parseCommaSeparatedOptions(args, "package");
-    }
-
-    @Nonnull
-    private List<String> parseExcludeClasses(@Nonnull ApplicationArguments args) {
-        return parseCommaSeparatedOptions(args, "exclude");
     }
 
     @Nonnull
@@ -291,6 +283,16 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
                 yield Algorithm.CHA;
             }
         };
+    }
+
+    @Nonnull
+    private List<String> parsePackageFilters(@Nonnull ApplicationArguments args) {
+        return parseCommaSeparatedOptions(args, "package");
+    }
+
+    @Nonnull
+    private List<String> parseExcludeClasses(@Nonnull ApplicationArguments args) {
+        return parseCommaSeparatedOptions(args, "exclude");
     }
 
     @Nonnull

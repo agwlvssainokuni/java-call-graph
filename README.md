@@ -14,7 +14,7 @@ A sophisticated command-line tool for static call graph analysis of Java applica
 - **Flexible Filtering**: Package-based inclusion and FQCN-based class exclusion
 - **Custom Entry Points**: Support for specifying custom methods as analysis starting points
 - **Flexible Input Support**: JAR files, class files, and directories
-- **Multiple Output Formats**: TXT (human-readable), CSV (data analysis), and DOT (visualization)
+- **Multiple Output Formats**: TXT (human-readable), CSV (data analysis), JSON (programmatic processing), and DOT (visualization)
 - **Duplicate Removal**: Call edges are deduplicated while maintaining insertion order
 - **Professional CLI**: Built with Spring Boot for robust command-line interface with proper exit codes
 
@@ -95,6 +95,9 @@ java -jar build/libs/java-call-graph-*.jar your-application.jar
 # CSV format for spreadsheet analysis
 ./gradlew bootRun --args="--format=csv --output=callgraph.csv application.jar"
 
+# JSON format for programmatic processing
+./gradlew bootRun --args="--format=json --output=callgraph.json application.jar"
+
 # DOT format for Graphviz visualization
 ./gradlew bootRun --args="--format=dot --output=callgraph.dot application.jar"
 dot -Tpng callgraph.dot -o callgraph.png
@@ -110,7 +113,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 | `--exclude=<class>` | Exclude classes by FQCN prefix (comma-separated) | none |
 | `--exclude-jdk` | Exclude JDK classes from analysis | `false` |
 | `--output=<file>` | Output file for call graph | stdout |
-| `--format=<format>` | Output format: `txt`, `csv`, `dot` | `txt` |
+| `--format=<format>` | Output format: `txt`, `csv`, `json`, `dot` | `txt` |
 | `--quiet` | Suppress standard output | `false` |
 | `--verbose` | Show detailed information | `false` |
 | `--help` | Show help message | - |
@@ -121,13 +124,18 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 - **Main.java**: Spring Boot CLI entry point with proper context management
 - **CallGraphRunner.java**: CLI argument processing and analysis orchestration  
-- **OutputFormatter.java**: Multi-format output generation (TXT, CSV, DOT)
+- **output/OutputFormatter.java**: Multi-format output generation (TXT, CSV, JSON, DOT)
+- **output/Format.java**: Output format enum
 
 ### Interface-Based Architecture
 
-- **analyzer/** package: Core analysis interfaces and data transfer objects
+- **analyze/** package: Core analysis interfaces and data transfer objects
   - `CallGraphAnalyzer.java`: Analysis interface defining the contract
+  - `Algorithm.java`: Analysis algorithm enum
   - `AnalysisResult.java`, `ClassInfo.java`, `MethodInfo.java`, `CallEdgeInfo.java`: Data records
+- **output/** package: Output formatting and format definitions
+  - `OutputFormatter.java`: Multi-format output generation
+  - `Format.java`: Output format enum
 - **sootup/** package: SootUp-specific implementation
   - `SootUpAnalyzer.java`: SootUp integration and call graph analysis engine
 - **Dependency Injection**: Spring Boot manages interface-to-implementation binding
@@ -169,11 +177,32 @@ Classes (3):
 ```
 
 ### CSV Format
-Structured data suitable for spreadsheet analysis:
+Structured call edge data suitable for spreadsheet analysis (only call edges, no verbose mode):
 ```csv
-caller_class,caller_method,target_class,target_method
+source_class,source_method,target_class,target_method
 "com.example.Main","main","com.example.Service","process"
 "com.example.Service","process","com.example.Repository","save"
+```
+
+### JSON Format
+Structured JSON output for programmatic processing and API integration:
+```json
+{
+  "callEdges": [
+    {
+      "sourceClass": "com.example.Main",
+      "sourceMethod": "main",
+      "targetClass": "com.example.Service",
+      "targetMethod": "process"
+    },
+    {
+      "sourceClass": "com.example.Service",  
+      "sourceMethod": "process",
+      "targetClass": "com.example.Repository",
+      "targetMethod": "save"
+    }
+  ]
+}
 ```
 
 ### DOT Format

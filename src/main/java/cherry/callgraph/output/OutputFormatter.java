@@ -53,7 +53,8 @@ public class OutputFormatter {
     ) {
         switch (format) {
             case TXT -> writeTextFormat(writer, result, verbose);
-            case CSV -> writeCsvFormat(writer, result, verbose);
+            case CSV -> writeCsvFormat(writer, result);
+            case JSON -> writeJsonFormat(writer, result, verbose);
             case DOT -> writeDotFormat(writer, result);
         }
     }
@@ -110,11 +111,10 @@ public class OutputFormatter {
 
     private void writeCsvFormat(
             @Nonnull PrintWriter writer,
-            @Nonnull AnalysisResult result,
-            boolean verbose
+            @Nonnull AnalysisResult result
     ) {
         // CSV header for call edges
-        writer.println("caller_class,caller_method,target_class,target_method");
+        writer.println("source_class,source_method,target_class,target_method");
 
         // Call edges data
         for (var callEdge : result.callEdges()) {
@@ -125,36 +125,62 @@ public class OutputFormatter {
                     escapeCsv(callEdge.targetMethod())
             );
         }
+    }
+
+    private void writeJsonFormat(
+            @Nonnull PrintWriter writer,
+            @Nonnull AnalysisResult result,
+            boolean verbose
+    ) {
+        writer.println("{");
+
+        // Call edges
+        writer.printf("  \"callEdges\": [%n");
+        for (int i = 0; i < result.callEdges().size(); i++) {
+            var callEdge = result.callEdges().get(i);
+            writer.printf("    {%n");
+            writer.printf("      \"sourceClass\": \"%s\",%n", escapeJson(callEdge.sourceClass()));
+            writer.printf("      \"sourceMethod\": \"%s\",%n", escapeJson(callEdge.sourceMethod()));
+            writer.printf("      \"targetClass\": \"%s\",%n", escapeJson(callEdge.targetClass()));
+            writer.printf("      \"targetMethod\": \"%s\"%n", escapeJson(callEdge.targetMethod()));
+            writer.printf("    }%s%n", i < result.callEdges().size() - 1 ? "," : "");
+        }
+        writer.printf("  ]");
 
         if (verbose) {
-            writer.println();
-            writer.println("class_name,type,is_interface,is_abstract");
-            for (var classInfo : result.classes()) {
-                String type = classInfo.isInterface() ? "interface" :
-                        classInfo.isAbstract() ? "abstract class" : "class";
-                writer.printf("\"%s\",\"%s\",%b,%b%n",
-                        escapeCsv(classInfo.name()),
-                        type,
-                        classInfo.isInterface(),
-                        classInfo.isAbstract()
-                );
-            }
+            writer.printf(",%n");
 
-            writer.println();
-            writer.println("class_name,method_name,signature,visibility,modifier");
-            for (var methodInfo : result.methods()) {
-                String visibility = methodInfo.isPublic() ? "public" :
-                        methodInfo.isPrivate() ? "private" : "package";
-                String modifier = methodInfo.isStatic() ? "static" : "instance";
-                writer.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
-                        escapeCsv(methodInfo.className()),
-                        escapeCsv(methodInfo.methodName()),
-                        escapeCsv(methodInfo.signature()),
-                        visibility,
-                        modifier
-                );
+            // Classes
+            writer.printf("  \"classes\": [%n");
+            for (int i = 0; i < result.classes().size(); i++) {
+                var classInfo = result.classes().get(i);
+                writer.printf("    {%n");
+                writer.printf("      \"name\": \"%s\",%n", escapeJson(classInfo.name()));
+                writer.printf("      \"isInterface\": %b,%n", classInfo.isInterface());
+                writer.printf("      \"isAbstract\": %b%n", classInfo.isAbstract());
+                writer.printf("    }%s%n", i < result.classes().size() - 1 ? "," : "");
             }
+            writer.printf("  ],%n");
+
+            // Methods
+            writer.printf("  \"methods\": [%n");
+            for (int i = 0; i < result.methods().size(); i++) {
+                var methodInfo = result.methods().get(i);
+                writer.printf("    {%n");
+                writer.printf("      \"className\": \"%s\",%n", escapeJson(methodInfo.className()));
+                writer.printf("      \"methodName\": \"%s\",%n", escapeJson(methodInfo.methodName()));
+                writer.printf("      \"signature\": \"%s\",%n", escapeJson(methodInfo.signature()));
+                writer.printf("      \"isStatic\": %b,%n", methodInfo.isStatic());
+                writer.printf("      \"isPrivate\": %b,%n", methodInfo.isPrivate());
+                writer.printf("      \"isPublic\": %b%n", methodInfo.isPublic());
+                writer.printf("    }%s%n", i < result.methods().size() - 1 ? "," : "");
+            }
+            writer.printf("  ]%n");
+        } else {
+            writer.printf("%n");
         }
+
+        writer.println("}");
     }
 
     private void writeDotFormat(
@@ -194,8 +220,17 @@ public class OutputFormatter {
         writer.println("}");
     }
 
+
     private String escapeCsv(@Nonnull String value) {
         return value.replace("\"", "\"\"");
+    }
+
+    private String escapeJson(@Nonnull String value) {
+        return value.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     private String formatDotNode(@Nonnull String className, @Nonnull String methodName) {

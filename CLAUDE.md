@@ -13,7 +13,7 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and SootUp
 - **Package Filtering**: Focus analysis on specific packages while excluding JDK classes
 - **Custom Entry Points**: Support for specifying custom methods as analysis starting points
 - **Flexible Input**: Supports JAR files, class files, and directories
-- **Multiple Output Formats**: TXT, CSV, and DOT formats for different use cases
+- **Multiple Output Formats**: TXT, CSV, JSON, and DOT formats for different use cases
 - **Spring Boot CLI**: Professional command-line interface with proper exit code handling
 
 ## Architecture
@@ -109,7 +109,7 @@ src/main/resources/
 - `--quiet`: Suppress standard output
 - `--verbose`: Show detailed information
 - `--output=<file>`: Output file for call graph (default: stdout)
-- `--format=<format>`: Output format: txt, csv, dot (default: txt)
+- `--format=<format>`: Output format: txt, csv, json, dot (default: txt)
 - `--help`: Show help message (PENDING)
 
 ## Key Dependencies
@@ -145,13 +145,17 @@ src/main/resources/
 ## Output Formats
 
 **TXT Format**: Human-readable text output with call edges and class listings (IMPLEMENTED)
-**CSV Format**: Structured data with headers for spreadsheet analysis (IMPLEMENTED)
+**CSV Format**: Structured call edge data with headers for spreadsheet analysis - outputs only call edges regardless of verbose mode (IMPLEMENTED)
+**JSON Format**: Structured JSON output for programmatic processing and API integration (IMPLEMENTED)
 **DOT Format**: Graphviz-compatible format for visual call graph generation (IMPLEMENTED)
 
 Usage examples:
 ```bash
 # CSV format for data analysis
 ./gradlew bootRun --args="--format=csv --output=callgraph.csv application.jar"
+
+# JSON format for programmatic processing
+./gradlew bootRun --args="--format=json --output=callgraph.json application.jar"
 
 # DOT format for visualization with Graphviz
 ./gradlew bootRun --args="--format=dot --output=callgraph.dot application.jar"
@@ -214,7 +218,7 @@ Example usage:
 - Interface-based architecture with clean separation of analysis interface and SootUp implementation
 - Package filtering and FQCN-based class exclusion (`--exclude=<class>`)
 - Custom entry point specification
-- Multiple output formats (TXT, CSV, DOT)
+- Multiple output formats (TXT, CSV, JSON, DOT)
 - Output file option (--output=<file>)
 - Duplicate call edge removal with insertion order preservation
 - Comprehensive logging and error handling with SootUp warning suppression

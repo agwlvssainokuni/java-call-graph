@@ -20,5 +20,5 @@ package cherry.callgraph.output;
  * Output format for call graph analysis results.
  */
 public enum Format {
-    TXT, CSV, DOT
+    TXT, CSV, JSON, DOT
 }
