@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package cherry.callgraph;
+package cherry.callgraph.sootup;
 
+import cherry.callgraph.analyzer.*;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,13 +40,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class SootUpAnalyzer {
+public class SootUpAnalyzer implements CallGraphAnalyzer {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    public enum Algorithm {
-        CHA, RTA
-    }
 
     @Nonnull
     public AnalysisResult analyzeFiles(
@@ -350,37 +347,5 @@ public class SootUpAnalyzer {
                 className.startsWith("org.w3c.") ||
                 className.startsWith("org.xml.") ||
                 className.startsWith("org.ietf.");
-    }
-
-    public record AnalysisResult(
-            @Nonnull List<ClassInfo> classes,
-            @Nonnull List<MethodInfo> methods,
-            @Nonnull List<CallEdgeInfo> callEdges
-    ) {
-    }
-
-    public record ClassInfo(
-            @Nonnull String name,
-            boolean isInterface,
-            boolean isAbstract
-    ) {
-    }
-
-    public record MethodInfo(
-            @Nonnull String className,
-            @Nonnull String methodName,
-            @Nonnull String signature,
-            boolean isStatic,
-            boolean isPrivate,
-            boolean isPublic
-    ) {
-    }
-
-    public record CallEdgeInfo(
-            @Nonnull String sourceClass,
-            @Nonnull String sourceMethod,
-            @Nonnull String targetClass,
-            @Nonnull String targetMethod
-    ) {
     }
 }

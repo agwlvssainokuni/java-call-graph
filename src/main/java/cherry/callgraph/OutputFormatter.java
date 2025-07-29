@@ -16,6 +16,7 @@
 
 package cherry.callgraph;
 
+import cherry.callgraph.analyzer.AnalysisResult;
 import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +34,7 @@ public class OutputFormatter {
     }
 
     public void writeOutput(
-            @Nonnull SootUpAnalyzer.AnalysisResult result,
+            @Nonnull AnalysisResult result,
             @Nonnull Format format,
             String outputFile,
             boolean verbose
@@ -50,7 +51,7 @@ public class OutputFormatter {
 
     private void writeFormatted(
             @Nonnull PrintWriter writer,
-            @Nonnull SootUpAnalyzer.AnalysisResult result,
+            @Nonnull AnalysisResult result,
             @Nonnull Format format,
             boolean verbose
     ) {
@@ -63,7 +64,7 @@ public class OutputFormatter {
 
     private void writeTextFormat(
             @Nonnull PrintWriter writer,
-            @Nonnull SootUpAnalyzer.AnalysisResult result,
+            @Nonnull AnalysisResult result,
             boolean verbose
     ) {
         writer.println("=== Call Graph Analysis Results ===");
@@ -113,7 +114,7 @@ public class OutputFormatter {
 
     private void writeCsvFormat(
             @Nonnull PrintWriter writer,
-            @Nonnull SootUpAnalyzer.AnalysisResult result,
+            @Nonnull AnalysisResult result,
             boolean verbose
     ) {
         // CSV header for call edges
@@ -162,7 +163,7 @@ public class OutputFormatter {
 
     private void writeDotFormat(
             @Nonnull PrintWriter writer,
-            @Nonnull SootUpAnalyzer.AnalysisResult result
+            @Nonnull AnalysisResult result
     ) {
         writer.println("digraph CallGraph {");
         writer.println("  rankdir=LR;");

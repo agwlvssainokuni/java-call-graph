@@ -16,6 +16,8 @@
 
 package cherry.callgraph;
 
+import cherry.callgraph.analyzer.AnalysisResult;
+import cherry.callgraph.analyzer.CallGraphAnalyzer;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,12 +36,12 @@ import java.util.stream.Stream;
 public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final SootUpAnalyzer sootUpAnalyzer;
+    private final CallGraphAnalyzer callGraphAnalyzer;
     private final OutputFormatter outputFormatter;
     private int exitCode = 0;
 
-    public CallGraphRunner(SootUpAnalyzer sootUpAnalyzer, OutputFormatter outputFormatter) {
-        this.sootUpAnalyzer = sootUpAnalyzer;
+    public CallGraphRunner(CallGraphAnalyzer callGraphAnalyzer, OutputFormatter outputFormatter) {
+        this.callGraphAnalyzer = callGraphAnalyzer;
         this.outputFormatter = outputFormatter;
     }
 
@@ -140,7 +142,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
         // Perform SootUp analysis
         try {
-            var result = sootUpAnalyzer.analyzeFiles(files, verbose, packageFilters, excludeClasses, algorithm, customEntryPoints, excludeJdk);
+            var result = callGraphAnalyzer.analyzeFiles(files, verbose, packageFilters, excludeClasses, algorithm, customEntryPoints, excludeJdk);
 
             // Write output in specified format
             if (outputFile != null || format != OutputFormatter.Format.TXT) {
@@ -203,7 +205,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         }
     }
 
-    private void displayResults(@Nonnull SootUpAnalyzer.AnalysisResult result, boolean verbose) {
+    private void displayResults(@Nonnull AnalysisResult result, boolean verbose) {
         logger.info("");
         logger.info("=== Call Graph Analysis Results ===");
 
@@ -277,13 +279,13 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
     }
 
     @Nonnull
-    private SootUpAnalyzer.Algorithm parseAlgorithm(@Nonnull String algorithmStr) {
+    private CallGraphAnalyzer.Algorithm parseAlgorithm(@Nonnull String algorithmStr) {
         return switch (algorithmStr.toLowerCase()) {
-            case "cha" -> SootUpAnalyzer.Algorithm.CHA;
-            case "rta" -> SootUpAnalyzer.Algorithm.RTA;
+            case "cha" -> CallGraphAnalyzer.Algorithm.CHA;
+            case "rta" -> CallGraphAnalyzer.Algorithm.RTA;
             default -> {
                 logger.warn("Unknown algorithm '{}', using CHA. Supported: cha, rta", algorithmStr);
-                yield SootUpAnalyzer.Algorithm.CHA;
+                yield CallGraphAnalyzer.Algorithm.CHA;
             }
         };
     }
