@@ -201,9 +201,11 @@ public class OutputFormatter {
 
         // Create nodes for all methods involved in call edges
         for (String nodeId : uniqueNodes) {
+            int lastDot = nodeId.lastIndexOf('.');
+            String label = lastDot > 0 ? nodeId.substring(0, lastDot) + "\\n" + nodeId.substring(lastDot + 1) : nodeId;
             writer.printf("  \"%s\" [label=\"%s\"];%n",
                     nodeId,
-                    nodeId
+                    label
             );
         }
 
