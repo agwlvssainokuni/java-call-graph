@@ -71,6 +71,12 @@ src/main/resources/
 # Package filtering
 ./gradlew bootRun --args="--package=cherry.testtool application.jar"
 
+# Class exclusion by FQCN prefix
+./gradlew bootRun --args="--exclude=com.example.test application.jar"
+
+# Multiple exclusions
+./gradlew bootRun --args="--exclude=com.example.test,org.junit application.jar"
+
 # RTA algorithm for better interface resolution
 ./gradlew bootRun --args="--algorithm=rta --package=cherry.testtool application.jar"
 
@@ -83,6 +89,7 @@ src/main/resources/
 - `--algorithm=<algo>`: Algorithm: cha, rta (default: cha) - RTA recommended for interface calls
 - `--entry=<method>`: Entry point method (default: main methods) - supports ClassName.methodName format
 - `--package=<package>`: Filter by package name - recommended for focused analysis
+- `--exclude=<class>`: Exclude classes by FQCN prefix - supports class and package exclusion
 - `--exclude-jdk`: Exclude JDK classes from analysis (default: false)
 - `--quiet`: Suppress standard output
 - `--verbose`: Show detailed information
@@ -109,9 +116,10 @@ src/main/resources/
 
 **Call Graph Construction**:
 - Algorithms: CHA (`ClassHierarchyAnalysisAlgorithm`), RTA (`RapidTypeAnalysisAlgorithm`)
-- Interface resolution: `expandEntryPointsWithImplementations()` adds concrete implementations as entry points
+- Interface resolution: SootUp automatically handles interface calls (no manual expansion needed)
 - Entry points: Automatic main method detection and custom method specification
-- Call graph API: `callGraph.callsFrom()` for traversing call relationships
+- Call graph API: `callGraph.callsFrom()` with `getSourceMethodSignature()` and `getTargetMethodSignature()`
+- Duplicate removal: `LinkedHashSet` maintains insertion order while removing duplicate call edges
 
 **Supported Input Types**:
 - `.jar` files: Added via `JavaClassPathAnalysisInputLocation`
@@ -162,38 +170,41 @@ Run analysis on the built application itself for testing:
 
 Expected output: Call graph showing Main.main -> Main.doMain relationship along with detected classes and methods.
 
-## Interface Call Resolution
+## Filtering and Exclusion
 
-The application includes sophisticated interface call resolution for Spring Dependency Injection patterns:
+The application provides flexible filtering options for focused analysis:
 
-- **Precise Interface Analysis**: `addImplementationsForInterfaces()` method identifies interfaces used by entry point classes and adds their concrete implementations as additional entry points
-- **Implementation Detection**: Uses SootUp's class hierarchy to find all concrete implementations of interfaces
-- **Entry Point Expansion**: `expandEntryPointsWithImplementations()` method in `SootUpAnalyzer.java`
-- **Algorithm Recommendation**: Use RTA algorithm (`--algorithm=rta`) for better interface call resolution
-- **Package Filtering Integration**: Interface resolution respects package filters for focused analysis
+- **Package Inclusion**: `--package=<package>` filters classes by package prefix for focused analysis
+- **Class Exclusion**: `--exclude=<class>` excludes classes by FQCN prefix (supports both specific classes and package prefixes)
+- **JDK Exclusion**: `--exclude-jdk` removes standard JDK classes from analysis
+- **Filter Precedence**: Exclusion filters are checked first, then inclusion filters are applied
+- **Stream API Processing**: All filtering uses functional programming style with Stream API
 
-Example usage for Spring applications:
+Example usage:
 ```bash
-# Analyze Spring application with interface resolution
-./gradlew bootRun --args="--algorithm=rta --package=cherry.testtool ../cherry-testtool/lib/build/libs/lib-plain.jar"
+# Focus on specific package, exclude test classes
+./gradlew bootRun --args="--package=cherry.testtool --exclude=cherry.testtool.test application.jar"
 
-# Expected: Controller → Service interface calls properly resolved (e.g., 8 call edges found)
+# Exclude multiple packages/classes
+./gradlew bootRun --args="--exclude=com.example.test,org.junit,cherry.testtool.Mock application.jar"
 ```
 
 ## Current Implementation Status
 
 **COMPLETED Features:**
 - Core call graph analysis with multiple algorithms (CHA, RTA)
-- Precise interface call resolution for Spring DI patterns
-- Package filtering and JDK exclusion
+- SootUp 2.0.0 integration with automatic interface call resolution
+- Package filtering and FQCN-based class exclusion (`--exclude=<class>`)
 - Custom entry point specification
 - Multiple output formats (TXT, CSV, DOT)
 - Output file option (--output=<file>)
-- Comprehensive logging and error handling
-- Migration from WALA to SootUp 2.0.0
-- Stream API refactoring for functional programming style
-- Proper SootUp class name handling (getName() and getFullyQualifiedName())
+- Duplicate call edge removal with insertion order preservation
+- Comprehensive logging and error handling with SootUp warning suppression
+- Stream API implementation for functional programming style
+- Proper SootUp Call API usage (`getSourceMethodSignature()`, `getTargetMethodSignature()`)
+- CallEdgeInfo properties aligned with SootUp naming (source/target instead of caller/target)
 
 **PENDING Features (Low Priority):**
 - WAR file support
 - Comprehensive help system (--help)
+- Entry point prioritization in call edge ordering

@@ -10,11 +10,12 @@ A sophisticated command-line tool for static call graph analysis of Java applica
 ## Features
 
 - **Multiple Analysis Algorithms**: CHA (Class Hierarchy Analysis) and RTA (Rapid Type Analysis)
-- **Interface Call Resolution**: Automatic detection and expansion of interface implementations for Spring DI pattern analysis
-- **Package Filtering**: Focus analysis on specific packages while excluding JDK classes
+- **Automatic Interface Resolution**: SootUp 2.0.0 handles interface calls automatically
+- **Flexible Filtering**: Package-based inclusion and FQCN-based class exclusion
 - **Custom Entry Points**: Support for specifying custom methods as analysis starting points
 - **Flexible Input Support**: JAR files, class files, and directories
 - **Multiple Output Formats**: TXT (human-readable), CSV (data analysis), and DOT (visualization)
+- **Duplicate Removal**: Call edges are deduplicated while maintaining insertion order
 - **Professional CLI**: Built with Spring Boot for robust command-line interface with proper exit codes
 
 ## Quick Start
@@ -53,13 +54,22 @@ java -jar build/libs/java-call-graph-*.jar your-application.jar
 ./gradlew bootRun --args="--verbose application.jar"
 ```
 
-### Package Filtering
+### Package Filtering and Class Exclusion
 ```bash
 # Focus analysis on specific package
 ./gradlew bootRun --args="--package=com.example application.jar"
 
 # Multiple packages
 ./gradlew bootRun --args="--package=com.example,org.mycompany application.jar"
+
+# Exclude specific classes by FQCN prefix
+./gradlew bootRun --args="--exclude=com.example.test application.jar"
+
+# Exclude multiple classes/packages
+./gradlew bootRun --args="--exclude=com.example.test,org.junit application.jar"
+
+# Combine filtering and exclusion
+./gradlew bootRun --args="--package=com.example --exclude=com.example.test application.jar"
 ```
 
 ### Algorithm Selection
@@ -97,6 +107,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 | `--algorithm=<algo>` | Analysis algorithm: `cha`, `rta` | `cha` |
 | `--entry=<method>` | Entry point method (ClassName.methodName format) | main methods |
 | `--package=<package>` | Filter by package name (comma-separated) | all packages |
+| `--exclude=<class>` | Exclude classes by FQCN prefix (comma-separated) | none |
 | `--exclude-jdk` | Exclude JDK classes from analysis | `false` |
 | `--output=<file>` | Output file for call graph | stdout |
 | `--format=<format>` | Output format: `txt`, `csv`, `dot` | `txt` |
@@ -118,7 +129,9 @@ dot -Tpng callgraph.dot -o callgraph.png
 Built on SootUp 2.0.0 with sophisticated features:
 
 - **Static Analysis**: Multiple algorithms for different precision/performance trade-offs
-- **Interface Resolution**: Automatic detection of interface implementations for Spring DI patterns
+- **Interface Resolution**: SootUp automatically handles interface calls (no manual expansion needed)
+- **Call Graph API**: Uses `getSourceMethodSignature()` and `getTargetMethodSignature()` for proper call edge extraction
+- **Duplicate Removal**: `LinkedHashSet` preserves insertion order while removing duplicate call edges
 - **View Management**: Proper SootUp JavaView configuration with input locations
 - **Entry Point Handling**: Automatic main method detection and custom entry point support
 
@@ -150,7 +163,7 @@ Classes (3):
 ### CSV Format
 Structured data suitable for spreadsheet analysis:
 ```csv
-caller_class,caller_method,target_class,target_method
+source_class,source_method,target_class,target_method
 "Lcom/example/Main","main","Lcom/example/Service","process"
 "Lcom/example/Service","process","Lcom/example/Repository","save"
 ```
@@ -167,18 +180,23 @@ digraph CallGraph {
 }
 ```
 
-## Interface Call Resolution
+## Filtering and Exclusion
 
-The tool includes sophisticated interface call resolution for Spring Dependency Injection patterns:
+The tool provides flexible filtering options for focused analysis:
 
-- **Precise Interface Analysis**: Identifies interfaces used by entry point classes
-- **Implementation Detection**: Finds all concrete implementations using SootUp's class hierarchy
-- **Entry Point Expansion**: Adds interface implementations as additional entry points
-- **Algorithm Recommendation**: Use RTA algorithm (`--algorithm=rta`) for better interface resolution
+- **Package Inclusion**: Use `--package=<package>` to focus on specific packages
+- **Class Exclusion**: Use `--exclude=<class>` for FQCN-based exclusion (supports both specific classes and package prefixes)
+- **Filter Precedence**: Exclusion filters are checked first, then inclusion filters are applied
+- **JDK Exclusion**: Use `--exclude-jdk` to remove standard library classes
+- **Algorithm Recommendation**: Use RTA algorithm (`--algorithm=rta`) for better interface call resolution
 
-Example for Spring applications:
+Example combinations:
 ```bash
-./gradlew bootRun --args="--algorithm=rta --package=com.example spring-app.jar"
+# Focus on business logic, exclude tests
+./gradlew bootRun --args="--package=com.example --exclude=com.example.test spring-app.jar"
+
+# Exclude multiple test frameworks
+./gradlew bootRun --args="--exclude=org.junit,org.mockito,com.example.Mock spring-app.jar"
 ```
 
 ## Build System
