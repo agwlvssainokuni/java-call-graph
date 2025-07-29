@@ -206,11 +206,15 @@ Structured JSON output for programmatic processing and API integration:
 ```
 
 ### DOT Format
-Graphviz-compatible format for visual call graph generation:
+Graphviz-compatible format for visual call graph generation with 2-line labels:
 ```dot
 digraph CallGraph {
   rankdir=LR;
   node [shape=box, style=rounded];
+  
+  "com.example.Main.main" [label="com.example.Main\nmain"];
+  "com.example.Service.process" [label="com.example.Service\nprocess"];
+  "com.example.Repository.save" [label="com.example.Repository\nsave"];
   
   "com.example.Main.main" -> "com.example.Service.process";
   "com.example.Service.process" -> "com.example.Repository.save";

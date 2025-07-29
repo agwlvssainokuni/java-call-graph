@@ -182,11 +182,15 @@ caller_class,caller_method,target_class,target_method
 ```
 
 ### DOT形式
-視覚的なコールグラフ生成のためのGraphviz互換形式:
+視覚的なコールグラフ生成のためのGraphviz互換形式（2行ラベル表示）:
 ```dot
 digraph CallGraph {
   rankdir=LR;
   node [shape=box, style=rounded];
+  
+  "com.example.Main.main" [label="com.example.Main\nmain"];
+  "com.example.Service.process" [label="com.example.Service\nprocess"];
+  "com.example.Repository.save" [label="com.example.Repository\nsave"];
   
   "com.example.Main.main" -> "com.example.Service.process";
   "com.example.Service.process" -> "com.example.Repository.save";

@@ -147,7 +147,7 @@ src/main/resources/
 **TXT Format**: Human-readable text output with call edges and class listings (IMPLEMENTED)
 **CSV Format**: Structured call edge data with headers for spreadsheet analysis - outputs only call edges regardless of verbose mode (IMPLEMENTED)
 **JSON Format**: Structured JSON output for programmatic processing and API integration (IMPLEMENTED)
-**DOT Format**: Graphviz-compatible format for visual call graph generation (IMPLEMENTED)
+**DOT Format**: Graphviz-compatible format for visual call graph generation with 2-line labels (class name and method name) (IMPLEMENTED)
 
 Usage examples:
 ```bash
