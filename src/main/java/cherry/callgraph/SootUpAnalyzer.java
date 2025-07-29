@@ -33,7 +33,9 @@ import sootup.java.core.views.JavaView;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -222,7 +224,7 @@ public class SootUpAnalyzer {
     ) {
         List<ClassInfo> classes = new ArrayList<>();
         List<MethodInfo> methods = new ArrayList<>();
-        List<CallEdgeInfo> callEdges = new ArrayList<>();
+        Set<CallEdgeInfo> callEdgeSet = new LinkedHashSet<>();
 
         // Collect classes and methods
         view.getClasses()
@@ -277,7 +279,7 @@ public class SootUpAnalyzer {
                             String targetClass = target.getDeclClassType().getFullyQualifiedName();
                             String targetMethod = target.getName();
 
-                            callEdges.add(new CallEdgeInfo(
+                            callEdgeSet.add(new CallEdgeInfo(
                                     sourceClass,
                                     sourceMethod,
                                     targetClass,
@@ -292,6 +294,7 @@ public class SootUpAnalyzer {
         );
 
         logger.debug("Total method signatures: {}", callGraph.getMethodSignatures().size());
+        List<CallEdgeInfo> callEdges = new ArrayList<>(callEdgeSet);
         logger.debug("Total call edges found: {}", callEdges.size());
 
         return new AnalysisResult(classes, methods, callEdges);
