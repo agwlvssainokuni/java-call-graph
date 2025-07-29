@@ -28,10 +28,8 @@ import sootup.core.inputlocation.AnalysisInputLocation;
 import sootup.core.model.SootMethod;
 import sootup.core.signatures.MethodSignature;
 import sootup.java.bytecode.frontend.inputlocation.JavaClassPathAnalysisInputLocation;
-import sootup.java.core.JavaSootClass;
 import sootup.java.core.views.JavaView;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -55,7 +53,7 @@ public class SootUpAnalyzer {
             @Nonnull Algorithm algorithm,
             @Nonnull List<String> customEntryPoints,
             boolean excludeJdk
-    ) throws IOException {
+    ) {
         logger.info("Initializing SootUp analysis for {} files", filePaths.size());
 
         // Create input locations for analysis
@@ -71,9 +69,6 @@ public class SootUpAnalyzer {
         // Find entry points
         logger.info("Finding entry points...");
         List<MethodSignature> entryPoints = findEntryPoints(view, verbose, customEntryPoints, packageFilters);
-
-        // Add interface implementations as additional entry points
-        entryPoints = expandEntryPointsWithImplementations(view, entryPoints, packageFilters);
 
         // Build call graph using specified algorithm
         logger.info("Building call graph with {}...", algorithm);
@@ -204,51 +199,6 @@ public class SootUpAnalyzer {
     }
 
     @Nonnull
-    private List<MethodSignature> expandEntryPointsWithImplementations(
-            @Nonnull JavaView view,
-            @Nonnull List<MethodSignature> originalEntryPoints,
-            @Nonnull List<String> packageFilters
-    ) {
-        List<MethodSignature> expandedEntryPoints = new ArrayList<>(originalEntryPoints);
-
-        // For each original entry point, find interface implementations
-        for (MethodSignature entryPoint : originalEntryPoints) {
-            view.getClass(entryPoint.getDeclClassType()).ifPresent(entryClass ->
-                    addImplementationsForInterfaces(view, entryClass, expandedEntryPoints, packageFilters)
-            );
-        }
-
-        logger.debug("Expanded to {} total entry points", expandedEntryPoints.size());
-        return expandedEntryPoints;
-    }
-
-    private void addImplementationsForInterfaces(
-            @Nonnull JavaView view,
-            @Nonnull JavaSootClass declaringClass,
-            @Nonnull List<MethodSignature> entryPoints,
-            @Nonnull List<String> packageFilters
-    ) {
-        // Find interfaces implemented by the declaring class and process with Stream API
-        declaringClass.getInterfaces().stream()
-                .filter(interfaceType -> matchesPackageFilter(interfaceType.getFullyQualifiedName(), packageFilters))
-                .filter(interfaceType -> view.getClass(interfaceType)
-                        .filter(JavaSootClass::isInterface).isPresent())
-                .flatMap(interfaceType -> view.getClasses()
-                        .filter(sootClass -> !sootClass.isInterface() &&
-                                !sootClass.isAbstract() &&
-                                matchesPackageFilter(sootClass.getName(), packageFilters) &&
-                                sootClass.getInterfaces().contains(interfaceType))
-                        .flatMap(sootClass -> sootClass.getMethods().stream()
-                                .filter(method -> method.isPublic() &&
-                                        !method.isAbstract() &&
-                                        !method.getName().equals("<init>") &&
-                                        !method.getName().equals("<clinit>"))
-                                .peek(method -> logger.debug("Added implementation method: {} for interface {}",
-                                        method.getSignature(), interfaceType.getFullyQualifiedName()))))
-                .forEach(method -> entryPoints.add(method.getSignature()));
-    }
-
-    @Nonnull
     private CallGraph buildCallGraph(
             @Nonnull JavaView view,
             @Nonnull List<MethodSignature> entryPoints,
@@ -275,81 +225,64 @@ public class SootUpAnalyzer {
         List<CallEdgeInfo> callEdges = new ArrayList<>();
 
         // Collect classes and methods
-        var allClasses = view.getClasses().collect(Collectors.toList());
-        for (JavaSootClass sootClass : allClasses) {
-            String className = sootClass.getName();
+        view.getClasses()
+                .filter(sootClass -> !(excludeJdk && isJdkClass(sootClass.getName())))
+                .filter(sootClass -> {
+                    boolean matches = matchesPackageFilter(sootClass.getName(), packageFilters);
+                    if (verbose && !packageFilters.isEmpty() && !matches) {
+                        logger.debug("Filtered out class: {}", sootClass.getName());
+                    }
+                    return matches;
+                })
+                .peek(sootClass -> {
+                    if (verbose) {
+                        logger.debug("Processing class: {}", sootClass.getName());
+                    }
+                })
+                .forEach(sootClass -> {
+                    String className = sootClass.getName();
+                    classes.add(new ClassInfo(className, sootClass.isInterface(), sootClass.isAbstract()));
 
-            // Skip JDK classes if excludeJdk is enabled
-            if (excludeJdk && isJdkClass(className)) {
-                continue;
-            }
-
-            // Apply package filtering
-            if (!matchesPackageFilter(className, packageFilters)) {
-                if (verbose && !packageFilters.isEmpty()) {
-                    logger.debug("Filtered out class: {}", className);
-                }
-                continue;
-            }
-
-            if (verbose) {
-                logger.debug("Processing class: {}", className);
-            }
-
-            classes.add(new ClassInfo(className, sootClass.isInterface(), sootClass.isAbstract()));
-
-            // Collect methods from this class
-            for (SootMethod method : sootClass.getMethods()) {
-                methods.add(new MethodInfo(
-                        className,
-                        method.getName(),
-                        method.getSignature().toString(),
-                        method.isStatic(),
-                        method.isPrivate(),
-                        method.isPublic()
-                ));
-            }
-        }
+                    sootClass.getMethods().forEach(method -> methods.add(new MethodInfo(
+                            className,
+                            method.getName(),
+                            method.getSignature().toString(),
+                            method.isStatic(),
+                            method.isPrivate(),
+                            method.isPublic()
+                    )));
+                });
 
         // Collect call edges from call graph
-        for (MethodSignature caller : callGraph.getMethodSignatures()) {
-            String callerClass = caller.getDeclClassType().getFullyQualifiedName();
-            String callerMethod = caller.getName();
+        callGraph.getMethodSignatures().stream()
+                .filter(caller -> !(excludeJdk && isJdkClass(caller.getDeclClassType().getFullyQualifiedName())))
+                .filter(caller -> matchesPackageFilter(caller.getDeclClassType().getFullyQualifiedName(), packageFilters))
+                .forEach(caller -> {
+                    String callerClass = caller.getDeclClassType().getFullyQualifiedName();
+                    String callerMethod = caller.getName();
 
-            // Skip JDK classes in call edges if excludeJdk is enabled
-            if (excludeJdk && isJdkClass(callerClass)) {
-                continue;
-            }
+                    callGraph.callsFrom(caller).forEach((CallGraph.Call call) -> {
+                        MethodSignature target = call.getTargetMethodSignature();
+                        String targetClass = target.getDeclClassType().getFullyQualifiedName();
+                        String targetMethod = target.getName();
 
-            // Apply package filtering to caller
-            if (!matchesPackageFilter(callerClass, packageFilters)) {
-                continue;
-            }
+                        if ((!excludeJdk || !isJdkClass(targetClass)) &&
+                                matchesPackageFilter(targetClass, packageFilters)) {
 
-            // SootUp 2.0.0 CallGraph API - callsFrom takes single MethodSignature
-            callGraph.callsFrom(caller).forEach((CallGraph.Call call) -> {
-                MethodSignature target = call.getTargetMethodSignature();
-                String targetClass = target.getDeclClassType().getFullyQualifiedName();
-                String targetMethod = target.getName();
+                            callEdges.add(new CallEdgeInfo(
+                                    callerClass,
+                                    callerMethod,
+                                    targetClass,
+                                    targetMethod
+                            ));
 
-                // Skip JDK classes in targets if excludeJdk is enabled
-                if ((!excludeJdk || !isJdkClass(targetClass)) &&
-                        matchesPackageFilter(targetClass, packageFilters)) {
-
-                    callEdges.add(new CallEdgeInfo(
-                            callerClass,
-                            callerMethod,
-                            targetClass,
-                            targetMethod
-                    ));
-
-                    if (verbose) {
-                        logger.debug("Call edge: {}.{} -> {}.{}",
-                                callerClass, callerMethod, targetClass, targetMethod);
-                    }
-                }
-            });
-        }
+                            if (verbose) {
+                                logger.debug("Call edge: {}.{} -> {}.{}",
+                                        callerClass, callerMethod, targetClass, targetMethod);
+                            }
+                        }
+                    });
+                });
 
         logger.debug("Total method signatures: {}", callGraph.getMethodSignatures().size());
         logger.debug("Total call edges found: {}", callEdges.size());
