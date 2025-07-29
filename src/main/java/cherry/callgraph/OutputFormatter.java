@@ -179,13 +179,10 @@ public class OutputFormatter {
 
         // Create nodes for all methods involved in call edges
         for (String nodeId : uniqueNodes) {
-            String[] parts = nodeId.split("\\.", 2);
-            if (parts.length == 2) {
-                writer.printf("  \"%s\" [label=\"%s\"];%n",
-                        nodeId,
-                        escapeDot(formatMethodLabel(parts[0], parts[1]))
-                );
-            }
+            writer.printf("  \"%s\" [label=\"%s\"];%n",
+                    nodeId,
+                    nodeId
+            );
         }
 
         writer.println();
@@ -205,22 +202,7 @@ public class OutputFormatter {
         return value.replace("\"", "\"\"");
     }
 
-    private String escapeDot(@Nonnull String value) {
-        return value.replace("\"", "\\\"").replace("\n", "\\n");
-    }
-
     private String formatDotNode(@Nonnull String className, @Nonnull String methodName) {
         return className + "." + methodName;
-    }
-
-    private String formatMethodLabel(@Nonnull String className, @Nonnull String methodName) {
-        // Simplify class name for readability
-        String simpleName = className;
-        if (simpleName.startsWith("L") && simpleName.endsWith(";")) {
-            simpleName = simpleName.substring(1, simpleName.length() - 1);
-        }
-        simpleName = simpleName.replace("/", ".");
-
-        return simpleName + "." + methodName;
     }
 }
