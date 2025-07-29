@@ -73,8 +73,8 @@ public class OutputFormatter {
         writer.printf("Call Graph (%d edges):%n", result.callEdges().size());
         for (var callEdge : result.callEdges()) {
             writer.printf("  %s.%s -> %s.%s%n",
-                    callEdge.callerClass(),
-                    callEdge.callerMethod(),
+                    callEdge.sourceClass(),
+                    callEdge.sourceMethod(),
                     callEdge.targetClass(),
                     callEdge.targetMethod()
             );
@@ -122,8 +122,8 @@ public class OutputFormatter {
         // Call edges data
         for (var callEdge : result.callEdges()) {
             writer.printf("\"%s\",\"%s\",\"%s\",\"%s\"%n",
-                    escapeCsv(callEdge.callerClass()),
-                    escapeCsv(callEdge.callerMethod()),
+                    escapeCsv(callEdge.sourceClass()),
+                    escapeCsv(callEdge.sourceMethod()),
                     escapeCsv(callEdge.targetClass()),
                     escapeCsv(callEdge.targetMethod())
             );
@@ -172,7 +172,7 @@ public class OutputFormatter {
         // Collect unique nodes
         var uniqueNodes = new java.util.HashSet<String>();
         for (var callEdge : result.callEdges()) {
-            uniqueNodes.add(formatDotNode(callEdge.callerClass(), callEdge.callerMethod()));
+            uniqueNodes.add(formatDotNode(callEdge.sourceClass(), callEdge.sourceMethod()));
             uniqueNodes.add(formatDotNode(callEdge.targetClass(), callEdge.targetMethod()));
         }
 
@@ -191,10 +191,10 @@ public class OutputFormatter {
 
         // Create edges
         for (var callEdge : result.callEdges()) {
-            String callerNode = formatDotNode(callEdge.callerClass(), callEdge.callerMethod());
+            String sourceNode = formatDotNode(callEdge.sourceClass(), callEdge.sourceMethod());
             String targetNode = formatDotNode(callEdge.targetClass(), callEdge.targetMethod());
 
-            writer.printf("  \"%s\" -> \"%s\";%n", callerNode, targetNode);
+            writer.printf("  \"%s\" -> \"%s\";%n", sourceNode, targetNode);
         }
 
         writer.println("}");

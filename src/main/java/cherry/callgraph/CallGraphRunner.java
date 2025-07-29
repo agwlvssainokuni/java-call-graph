@@ -206,8 +206,8 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         logger.info("Call Graph ({} edges):", result.callEdges().size());
         for (var callEdge : result.callEdges()) {
             logger.info("  {}.{} -> {}.{}",
-                    callEdge.callerClass(),
-                    callEdge.callerMethod(),
+                    callEdge.sourceClass(),
+                    callEdge.sourceMethod(),
                     callEdge.targetClass(),
                     callEdge.targetMethod()
             );

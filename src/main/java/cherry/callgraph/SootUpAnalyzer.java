@@ -79,7 +79,7 @@ public class SootUpAnalyzer {
         }
 
         // Collect analysis results
-        var result = collectAnalysisResults(view, callGraph, entryPoints, verbose, packageFilters, excludeJdk);
+        var result = collectAnalysisResults(view, callGraph, verbose, packageFilters, excludeJdk);
 
         logger.info("Analysis completed: {} classes, {} methods, {} call edges found",
                 result.classes().size(), result.methods().size(), result.callEdges().size());
@@ -216,7 +216,6 @@ public class SootUpAnalyzer {
     private AnalysisResult collectAnalysisResults(
             @Nonnull JavaView view,
             @Nonnull CallGraph callGraph,
-            @Nonnull List<MethodSignature> entryPoints,
             boolean verbose,
             @Nonnull List<String> packageFilters,
             boolean excludeJdk
@@ -254,41 +253,42 @@ public class SootUpAnalyzer {
                     )));
                 });
 
-        // Collect call edges from call graph starting from entry points
-        entryPoints.forEach(entryPoint -> callGraph.callsFrom(entryPoint).stream()
-                .filter(call -> {
-                    MethodSignature caller = call.getSourceMethodSignature();
-                    String callerClass = caller.getDeclClassType().getFullyQualifiedName();
-                    return !(excludeJdk && isJdkClass(callerClass)) &&
-                            matchesPackageFilter(callerClass, packageFilters);
-                })
-                .filter(call -> {
-                    MethodSignature target = call.getTargetMethodSignature();
-                    String targetClass = target.getDeclClassType().getFullyQualifiedName();
-                    return !(excludeJdk && isJdkClass(targetClass)) &&
-                            matchesPackageFilter(targetClass, packageFilters);
-                })
-                .forEach(call -> {
-                    MethodSignature caller = call.getSourceMethodSignature();
-                    MethodSignature target = call.getTargetMethodSignature();
+        // Collect call edges from call graph
+        callGraph.getMethodSignatures().forEach(methodSignature ->
+                callGraph.callsFrom(methodSignature).stream()
+                        .filter(call -> {
+                            MethodSignature source = call.getSourceMethodSignature();
+                            String sourceClass = source.getDeclClassType().getFullyQualifiedName();
+                            return !(excludeJdk && isJdkClass(sourceClass)) &&
+                                    matchesPackageFilter(sourceClass, packageFilters);
+                        })
+                        .filter(call -> {
+                            MethodSignature target = call.getTargetMethodSignature();
+                            String targetClass = target.getDeclClassType().getFullyQualifiedName();
+                            return !(excludeJdk && isJdkClass(targetClass)) &&
+                                    matchesPackageFilter(targetClass, packageFilters);
+                        })
+                        .forEach(call -> {
+                            MethodSignature source = call.getSourceMethodSignature();
+                            MethodSignature target = call.getTargetMethodSignature();
 
-                    String callerClass = caller.getDeclClassType().getFullyQualifiedName();
-                    String callerMethod = caller.getName();
-                    String targetClass = target.getDeclClassType().getFullyQualifiedName();
-                    String targetMethod = target.getName();
+                            String sourceClass = source.getDeclClassType().getFullyQualifiedName();
+                            String sourceMethod = source.getName();
+                            String targetClass = target.getDeclClassType().getFullyQualifiedName();
+                            String targetMethod = target.getName();
 
-                    callEdges.add(new CallEdgeInfo(
-                            callerClass,
-                            callerMethod,
-                            targetClass,
-                            targetMethod
-                    ));
+                            callEdges.add(new CallEdgeInfo(
+                                    sourceClass,
+                                    sourceMethod,
+                                    targetClass,
+                                    targetMethod
+                            ));
 
-                    if (verbose) {
-                        logger.debug("Call edge: {}.{} -> {}.{}",
-                                callerClass, callerMethod, targetClass, targetMethod);
-                    }
-                })
+                            if (verbose) {
+                                logger.debug("Call edge: {}.{} -> {}.{}",
+                                        sourceClass, sourceMethod, targetClass, targetMethod);
+                            }
+                        })
         );
 
         logger.debug("Total method signatures: {}", callGraph.getMethodSignatures().size());
@@ -361,8 +361,8 @@ public class SootUpAnalyzer {
     }
 
     public record CallEdgeInfo(
-            @Nonnull String callerClass,
-            @Nonnull String callerMethod,
+            @Nonnull String sourceClass,
+            @Nonnull String sourceMethod,
             @Nonnull String targetClass,
             @Nonnull String targetMethod
     ) {
