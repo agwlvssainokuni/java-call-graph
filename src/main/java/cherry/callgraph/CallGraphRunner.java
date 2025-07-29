@@ -27,8 +27,8 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
@@ -268,46 +268,12 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
     @Nonnull
     private List<String> parsePackageFilters(@Nonnull ApplicationArguments args) {
-        var packageOptions = args.getOptionValues("package");
-        if (packageOptions == null || packageOptions.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> filters = new ArrayList<>();
-        for (String packageOption : packageOptions) {
-            // Split by comma to support multiple packages in one option
-            String[] packages = packageOption.split(",");
-            for (String pkg : packages) {
-                String trimmed = pkg.trim();
-                if (!trimmed.isEmpty()) {
-                    filters.add(trimmed);
-                }
-            }
-        }
-
-        return filters;
+        return parseCommaSeparatedOptions(args, "package");
     }
 
     @Nonnull
     private List<String> parseExcludeClasses(@Nonnull ApplicationArguments args) {
-        var excludeOptions = args.getOptionValues("exclude");
-        if (excludeOptions == null || excludeOptions.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> excludes = new ArrayList<>();
-        for (String excludeOption : excludeOptions) {
-            // Split by comma to support multiple classes in one option
-            String[] classes = excludeOption.split(",");
-            for (String cls : classes) {
-                String trimmed = cls.trim();
-                if (!trimmed.isEmpty()) {
-                    excludes.add(trimmed);
-                }
-            }
-        }
-
-        return excludes;
+        return parseCommaSeparatedOptions(args, "exclude");
     }
 
     @Nonnull
@@ -324,23 +290,20 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
     @Nonnull
     private List<String> parseEntryPoints(@Nonnull ApplicationArguments args) {
-        var entryOptions = args.getOptionValues("entry");
-        if (entryOptions == null || entryOptions.isEmpty()) {
+        return parseCommaSeparatedOptions(args, "entry");
+    }
+
+    @Nonnull
+    private List<String> parseCommaSeparatedOptions(@Nonnull ApplicationArguments args, @Nonnull String optionName) {
+        var options = args.getOptionValues(optionName);
+        if (options == null || options.isEmpty()) {
             return List.of();
         }
 
-        List<String> entryPoints = new ArrayList<>();
-        for (String entryOption : entryOptions) {
-            // Split by comma to support multiple entry points in one option
-            String[] entries = entryOption.split(",");
-            for (String entry : entries) {
-                String trimmed = entry.trim();
-                if (!trimmed.isEmpty()) {
-                    entryPoints.add(trimmed);
-                }
-            }
-        }
-
-        return entryPoints;
+        return options.stream()
+                .flatMap(option -> Stream.of(option.split(",")))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
     }
 }
