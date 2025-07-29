@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cherry.callgraph;
+package cherry.callgraph.output;
 
 import cherry.callgraph.analyze.AnalysisResult;
 import jakarta.annotation.Nonnull;
@@ -28,10 +28,6 @@ import java.nio.file.Paths;
 
 @Component
 public class OutputFormatter {
-
-    public enum Format {
-        TXT, CSV, DOT
-    }
 
     public void writeOutput(
             @Nonnull AnalysisResult result,

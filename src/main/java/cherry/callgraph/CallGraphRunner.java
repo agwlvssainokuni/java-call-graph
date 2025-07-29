@@ -19,6 +19,8 @@ package cherry.callgraph;
 import cherry.callgraph.analyze.Algorithm;
 import cherry.callgraph.analyze.AnalysisResult;
 import cherry.callgraph.analyze.CallGraphAnalyzer;
+import cherry.callgraph.output.Format;
+import cherry.callgraph.output.OutputFormatter;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,7 +148,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
             var result = callGraphAnalyzer.analyzeFiles(files, verbose, packageFilters, excludeClasses, algorithm, customEntryPoints, excludeJdk);
 
             // Write output in specified format
-            if (outputFile != null || format != OutputFormatter.Format.TXT) {
+            if (outputFile != null || format != Format.TXT) {
                 outputFormatter.writeOutput(result, format, outputFile, verbose);
                 if (!quiet && outputFile != null) {
                     logger.info("Output written to: {}", outputFile);
@@ -257,14 +259,14 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         return values != null && !values.isEmpty() ? values.getFirst() : defaultValue;
     }
 
-    private OutputFormatter.Format parseOutputFormat(@Nonnull String formatStr) {
+    private Format parseOutputFormat(@Nonnull String formatStr) {
         return switch (formatStr.toLowerCase()) {
-            case "txt", "text" -> OutputFormatter.Format.TXT;
-            case "csv" -> OutputFormatter.Format.CSV;
-            case "dot", "graphviz" -> OutputFormatter.Format.DOT;
+            case "txt", "text" -> Format.TXT;
+            case "csv" -> Format.CSV;
+            case "dot", "graphviz" -> Format.DOT;
             default -> {
                 logger.warn("Unknown output format '{}', using TXT format", formatStr);
-                yield OutputFormatter.Format.TXT;
+                yield Format.TXT;
             }
         };
     }
