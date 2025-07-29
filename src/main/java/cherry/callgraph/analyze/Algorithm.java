@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-package cherry.callgraph.analyzer;
-
-import jakarta.annotation.Nonnull;
+package cherry.callgraph.analyze;
 
 /**
- * Information about a method found during analysis.
+ * Call graph analysis algorithms.
  */
-public record MethodInfo(
-        @Nonnull String className,
-        @Nonnull String methodName,
-        @Nonnull String signature,
-        boolean isStatic,
-        boolean isPrivate,
-        boolean isPublic
-) {
+public enum Algorithm {
+    CHA, RTA
 }

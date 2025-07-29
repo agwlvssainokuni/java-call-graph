@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cherry.callgraph.analyzer;
+package cherry.callgraph.analyze;
 
 import jakarta.annotation.Nonnull;
 

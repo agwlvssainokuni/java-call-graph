@@ -16,7 +16,7 @@
 
 package cherry.callgraph;
 
-import cherry.callgraph.analyzer.AnalysisResult;
+import cherry.callgraph.analyze.AnalysisResult;
 import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Component;
 

@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package cherry.callgraph.analyzer;
+package cherry.callgraph.analyze;
 
 import jakarta.annotation.Nonnull;
 
 /**
- * Information about a call edge found during analysis.
+ * Information about a method found during analysis.
  */
-public record CallEdgeInfo(
-        @Nonnull String sourceClass,
-        @Nonnull String sourceMethod,
-        @Nonnull String targetClass,
-        @Nonnull String targetMethod
+public record MethodInfo(
+        @Nonnull String className,
+        @Nonnull String methodName,
+        @Nonnull String signature,
+        boolean isStatic,
+        boolean isPrivate,
+        boolean isPublic
 ) {
 }

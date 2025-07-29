@@ -16,8 +16,9 @@
 
 package cherry.callgraph;
 
-import cherry.callgraph.analyzer.AnalysisResult;
-import cherry.callgraph.analyzer.CallGraphAnalyzer;
+import cherry.callgraph.analyze.Algorithm;
+import cherry.callgraph.analyze.AnalysisResult;
+import cherry.callgraph.analyze.CallGraphAnalyzer;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -279,13 +280,13 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
     }
 
     @Nonnull
-    private CallGraphAnalyzer.Algorithm parseAlgorithm(@Nonnull String algorithmStr) {
+    private Algorithm parseAlgorithm(@Nonnull String algorithmStr) {
         return switch (algorithmStr.toLowerCase()) {
-            case "cha" -> CallGraphAnalyzer.Algorithm.CHA;
-            case "rta" -> CallGraphAnalyzer.Algorithm.RTA;
+            case "cha" -> Algorithm.CHA;
+            case "rta" -> Algorithm.RTA;
             default -> {
                 logger.warn("Unknown algorithm '{}', using CHA. Supported: cha, rta", algorithmStr);
-                yield CallGraphAnalyzer.Algorithm.CHA;
+                yield Algorithm.CHA;
             }
         };
     }

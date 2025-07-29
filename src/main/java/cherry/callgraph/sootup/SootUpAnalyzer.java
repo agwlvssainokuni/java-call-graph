@@ -16,7 +16,7 @@
 
 package cherry.callgraph.sootup;
 
-import cherry.callgraph.analyzer.*;
+import cherry.callgraph.analyze.*;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

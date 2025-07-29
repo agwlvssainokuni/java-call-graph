@@ -24,7 +24,7 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and SootUp
 - Package structure: `cherry.callgraph` as base package with modular sub-packages
 
 **Interface-Based Design**: Clean separation of concerns
-- `cherry.callgraph.analyzer`: Core analysis interfaces and data transfer objects
+- `cherry.callgraph.analyze`: Core analysis interfaces and data transfer objects
 - `cherry.callgraph.sootup`: SootUp-specific implementation
 - Dependency injection: Spring Boot manages interface-to-implementation binding
 
@@ -49,8 +49,9 @@ src/main/java/cherry/callgraph/
 ├── Main.java                    # Spring Boot CLI entry point
 ├── CallGraphRunner.java         # CLI argument processing and analysis orchestration
 ├── OutputFormatter.java        # Multi-format output generation
-├── analyzer/                    # Analysis interface and data objects
+├── analyze/                     # Analysis interface and data objects
 │   ├── CallGraphAnalyzer.java   # Core analysis interface
+│   ├── Algorithm.java           # Analysis algorithm enum
 │   ├── AnalysisResult.java      # Analysis result data
 │   ├── ClassInfo.java           # Class information record
 │   ├── MethodInfo.java          # Method information record
@@ -217,7 +218,8 @@ Example usage:
 - Stream API implementation for functional programming style
 - Proper SootUp Call API usage (`getSourceMethodSignature()`, `getTargetMethodSignature()`)
 - CallEdgeInfo properties aligned with SootUp naming (source/target instead of caller/target)
-- Modular package structure: `analyzer` for interfaces/DTOs, `sootup` for implementation
+- Modular package structure: `analyze` for interfaces/DTOs, `sootup` for implementation
+- Extracted Algorithm enum for better separation of concerns
 
 **PENDING Features (Low Priority):**
 - WAR file support

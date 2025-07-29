@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cherry.callgraph.analyzer;
+package cherry.callgraph.analyze;
 
 import jakarta.annotation.Nonnull;
 
@@ -24,10 +24,6 @@ import java.util.List;
  * Interface for call graph analysis implementations.
  */
 public interface CallGraphAnalyzer {
-
-    enum Algorithm {
-        CHA, RTA
-    }
 
     /**
      * Analyzes the given files to extract call graph information.
