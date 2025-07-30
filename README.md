@@ -155,7 +155,7 @@ Built on SootUp 2.0.0 with sophisticated features:
 - **Call Graph API**: Uses `getSourceMethodSignature()` and `getTargetMethodSignature()` for proper call edge extraction
 - **Duplicate Removal**: `LinkedHashSet` preserves insertion order while removing duplicate call edges
 - **View Management**: Proper SootUp JavaView configuration with input locations
-- **Entry Point Handling**: Automatic main method detection and custom entry point support with wildcard patterns
+- **Entry Point Handling**: Automatic main method detection and custom entry point support with wildcard patterns (proper regex escaping for Java class/method names including $ character)
 
 ## Supported Input Types
 

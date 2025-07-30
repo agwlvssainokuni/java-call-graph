@@ -230,6 +230,7 @@ Example usage:
 - CallEdgeInfo properties aligned with SootUp naming (source/target instead of caller/target)
 - Modular package structure: `analyze` for interfaces/DTOs, `output` for formatting, `sootup` for implementation
 - Extracted Algorithm and Format enums for better separation of concerns
+- Wildcard entry point support with proper regex escaping for Java class/method names (including $ character handling)
 
 **PENDING Features (Low Priority):**
 - WAR file support

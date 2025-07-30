@@ -356,6 +356,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
 
         // Convert pattern to regex
         String regex = pattern
+                .replace("$", "\\$")  // Escape dollar signs
                 .replace(".", "\\.")  // Escape dots
                 .replace("*", ".*");  // Replace * with .*
 
