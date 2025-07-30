@@ -83,8 +83,8 @@ src/main/resources/
 # Verbose output
 ./gradlew bootRun --args="--verbose application.jar"
 
-# Package filtering
-./gradlew bootRun --args="--package=cherry.testtool application.jar"
+# Class filtering by FQCN prefix
+./gradlew bootRun --args="--include=cherry.testtool application.jar"
 
 # Class exclusion by FQCN prefix
 ./gradlew bootRun --args="--exclude=com.example.test application.jar"
@@ -93,7 +93,7 @@ src/main/resources/
 ./gradlew bootRun --args="--exclude=com.example.test,org.junit application.jar"
 
 # RTA algorithm for better interface resolution
-./gradlew bootRun --args="--algorithm=rta --package=cherry.testtool application.jar"
+./gradlew bootRun --args="--algorithm=rta --include=cherry.testtool application.jar"
 
 # Custom entry point analysis
 ./gradlew bootRun --args="--entry=InvokerController.invoke application.jar"
@@ -103,7 +103,7 @@ src/main/resources/
 
 - `--algorithm=<algo>`: Algorithm: cha, rta (default: cha) - RTA recommended for interface calls
 - `--entry=<method>`: Entry point method (default: main methods) - supports ClassName.methodName format
-- `--package=<package>`: Filter by package name - recommended for focused analysis
+- `--include=<class>`: Include classes by FQCN prefix - recommended for focused analysis
 - `--exclude=<class>`: Exclude classes by FQCN prefix - supports class and package exclusion
 - `--exclude-jdk`: Exclude JDK classes from analysis (default: false)
 - `--quiet`: Suppress standard output
@@ -195,7 +195,7 @@ Expected output: Call graph showing Main.main -> Main.doMain relationship along 
 
 The application provides flexible filtering options for focused analysis:
 
-- **Package Inclusion**: `--package=<package>` filters classes by package prefix for focused analysis
+- **Class Inclusion**: `--include=<class>` filters classes by FQCN prefix for focused analysis
 - **Class Exclusion**: `--exclude=<class>` excludes classes by FQCN prefix (supports both specific classes and package prefixes)
 - **JDK Exclusion**: `--exclude-jdk` removes standard JDK classes from analysis
 - **Filter Precedence**: Exclusion filters are checked first, then inclusion filters are applied
@@ -203,8 +203,8 @@ The application provides flexible filtering options for focused analysis:
 
 Example usage:
 ```bash
-# Focus on specific package, exclude test classes
-./gradlew bootRun --args="--package=cherry.testtool --exclude=cherry.testtool.test application.jar"
+# Focus on specific class prefix, exclude test classes
+./gradlew bootRun --args="--include=cherry.testtool --exclude=cherry.testtool.test application.jar"
 
 # Exclude multiple packages/classes
 ./gradlew bootRun --args="--exclude=com.example.test,org.junit,cherry.testtool.Mock application.jar"

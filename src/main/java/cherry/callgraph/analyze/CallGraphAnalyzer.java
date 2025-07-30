@@ -30,7 +30,7 @@ public interface CallGraphAnalyzer {
      *
      * @param filePaths         list of file paths to analyze
      * @param verbose           whether to output verbose information
-     * @param packageFilters    list of package filters to include
+     * @param includeClasses    list of class prefixes to include
      * @param excludeClasses    list of class prefixes to exclude
      * @param algorithm         analysis algorithm to use
      * @param customEntryPoints list of custom entry points
@@ -41,7 +41,7 @@ public interface CallGraphAnalyzer {
     AnalysisResult analyzeFiles(
             @Nonnull List<String> filePaths,
             boolean verbose,
-            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> includeClasses,
             @Nonnull List<String> excludeClasses,
             @Nonnull Algorithm algorithm,
             @Nonnull List<String> customEntryPoints,

@@ -84,7 +84,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         logger.info("  --format=<format>      Output format: txt, csv, json, dot (default: txt)");
         logger.info("  --algorithm=<algo>     Algorithm: cha, rta (default: cha)");
         logger.info("  --entry=<method>       Entry point method (default: main methods)");
-        logger.info("  --package=<package>    Filter by package name");
+        logger.info("  --include=<class>      Include classes by FQCN prefix");
         logger.info("  --exclude=<class>      Exclude classes by FQCN prefix");
         logger.info("  --exclude-jdk          Exclude JDK classes from analysis");
         logger.info("  --quiet                Suppress standard output");
@@ -114,11 +114,11 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
         var formatStr = getOptionValue(args, "format", "txt");
         var format = parseOutputFormat(formatStr);
 
-        // Parse package filters
-        var packageFilters = parsePackageFilters(args);
+        // Parse include/exclude filters
+        var includeClasses = parseIncludeClasses(args);
         var excludeClasses = parseExcludeClasses(args);
-        if (!quiet && !packageFilters.isEmpty()) {
-            logger.info("Package filters: {}", String.join(", ", packageFilters));
+        if (!quiet && !includeClasses.isEmpty()) {
+            logger.info("Include classes: {}", String.join(", ", includeClasses));
         }
         if (!quiet && !excludeClasses.isEmpty()) {
             logger.info("Exclude classes: {}", String.join(", ", excludeClasses));
@@ -145,7 +145,7 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
 
         // Perform SootUp analysis
         try {
-            var result = callGraphAnalyzer.analyzeFiles(files, verbose, packageFilters, excludeClasses, algorithm, customEntryPoints, excludeJdk);
+            var result = callGraphAnalyzer.analyzeFiles(files, verbose, includeClasses, excludeClasses, algorithm, customEntryPoints, excludeJdk);
 
             // Write output in specified format
             if (outputFile != null || format != Format.TXT) {
@@ -286,8 +286,8 @@ public class CallGraphRunner implements ApplicationRunner, ExitCodeGenerator {
     }
 
     @Nonnull
-    private List<String> parsePackageFilters(@Nonnull ApplicationArguments args) {
-        return parseCommaSeparatedOptions(args, "package");
+    private List<String> parseIncludeClasses(@Nonnull ApplicationArguments args) {
+        return parseCommaSeparatedOptions(args, "include");
     }
 
     @Nonnull

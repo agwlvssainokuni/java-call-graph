@@ -49,7 +49,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
     public AnalysisResult analyzeFiles(
             @Nonnull List<String> filePaths,
             boolean verbose,
-            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> includeClasses,
             @Nonnull List<String> excludeClasses,
             @Nonnull Algorithm algorithm,
             @Nonnull List<String> customEntryPoints,
@@ -69,7 +69,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
 
         // Find entry points
         logger.info("Finding entry points...");
-        List<MethodSignature> entryPoints = findEntryPoints(view, verbose, customEntryPoints, packageFilters, excludeClasses);
+        List<MethodSignature> entryPoints = findEntryPoints(view, verbose, customEntryPoints, includeClasses, excludeClasses);
 
         // Build call graph using specified algorithm
         logger.info("Building call graph with {}...", algorithm);
@@ -80,7 +80,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
         }
 
         // Collect analysis results
-        var result = collectAnalysisResults(view, callGraph, verbose, packageFilters, excludeClasses, excludeJdk);
+        var result = collectAnalysisResults(view, callGraph, verbose, includeClasses, excludeClasses, excludeJdk);
 
         logger.info("Analysis completed: {} classes, {} methods, {} call edges found",
                 result.classes().size(), result.methods().size(), result.callEdges().size());
@@ -119,7 +119,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
             @Nonnull JavaView view,
             boolean verbose,
             @Nonnull List<String> customEntryPoints,
-            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> includeClasses,
             @Nonnull List<String> excludeClasses
     ) {
         List<MethodSignature> entryPoints;
@@ -128,7 +128,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
             // Use custom entry points
             entryPoints = customEntryPoints.stream()
                     .flatMap(entryPointSpec -> {
-                        var foundMethods = findMethodsBySpec(view, entryPointSpec, packageFilters, excludeClasses);
+                        var foundMethods = findMethodsBySpec(view, entryPointSpec, includeClasses, excludeClasses);
                         if (verbose) {
                             foundMethods.forEach(method -> logger.info("Found custom entry point: {}", method));
                         }
@@ -138,7 +138,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
         } else {
             // Find main methods
             entryPoints = view.getClasses()
-                    .filter(sootClass -> matchesClassFilter(sootClass.getName(), packageFilters, excludeClasses))
+                    .filter(sootClass -> matchesClassFilter(sootClass.getName(), includeClasses, excludeClasses))
                     .flatMap(sootClass -> sootClass.getMethods().stream())
                     .filter(method -> method.getName().equals("main") &&
                             method.isStatic() &&
@@ -170,7 +170,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
     private List<MethodSignature> findMethodsBySpec(
             @Nonnull JavaView view,
             @Nonnull String entryPointSpec,
-            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> includeClasses,
             @Nonnull List<String> excludeClasses
     ) {
         // Parse entry point specification: ClassName.methodName or just methodName
@@ -187,7 +187,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
         }
 
         return view.getClasses()
-                .filter(sootClass -> matchesClassFilter(sootClass.getName(), packageFilters, excludeClasses))
+                .filter(sootClass -> matchesClassFilter(sootClass.getName(), includeClasses, excludeClasses))
                 .filter(sootClass -> {
                     if (className == null) {
                         return true;
@@ -220,7 +220,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
             @Nonnull JavaView view,
             @Nonnull CallGraph callGraph,
             boolean verbose,
-            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> includeClasses,
             @Nonnull List<String> excludeClasses,
             boolean excludeJdk
     ) {
@@ -232,8 +232,8 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
         view.getClasses()
                 .filter(sootClass -> !(excludeJdk && isJdkClass(sootClass.getName())))
                 .filter(sootClass -> {
-                    boolean matches = matchesClassFilter(sootClass.getName(), packageFilters, excludeClasses);
-                    if (verbose && (!packageFilters.isEmpty() || !excludeClasses.isEmpty()) && !matches) {
+                    boolean matches = matchesClassFilter(sootClass.getName(), includeClasses, excludeClasses);
+                    if (verbose && (!includeClasses.isEmpty() || !excludeClasses.isEmpty()) && !matches) {
                         logger.debug("Filtered out class: {}", sootClass.getName());
                     }
                     return matches;
@@ -264,13 +264,13 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
                             MethodSignature source = call.getSourceMethodSignature();
                             String sourceClass = source.getDeclClassType().getFullyQualifiedName();
                             return !(excludeJdk && isJdkClass(sourceClass)) &&
-                                    matchesClassFilter(sourceClass, packageFilters, excludeClasses);
+                                    matchesClassFilter(sourceClass, includeClasses, excludeClasses);
                         })
                         .filter(call -> {
                             MethodSignature target = call.getTargetMethodSignature();
                             String targetClass = target.getDeclClassType().getFullyQualifiedName();
                             return !(excludeJdk && isJdkClass(targetClass)) &&
-                                    matchesClassFilter(targetClass, packageFilters, excludeClasses);
+                                    matchesClassFilter(targetClass, includeClasses, excludeClasses);
                         })
                         .forEach(call -> {
                             MethodSignature source = call.getSourceMethodSignature();
@@ -304,7 +304,7 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
 
     private boolean matchesClassFilter(
             @Nonnull String className,
-            @Nonnull List<String> packageFilters,
+            @Nonnull List<String> includeClasses,
             @Nonnull List<String> excludeClasses
     ) {
         // Check if class matches any exclude filter first (FQCN prefix match)
@@ -314,24 +314,14 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
             }
         }
 
-        // If no package include filters specified, include all (except excluded)
-        if (packageFilters.isEmpty()) {
+        // If no include filters specified, include all (except excluded)
+        if (includeClasses.isEmpty()) {
             return true;
         }
 
-        // Extract package part for package filtering
-        String packageName = className;
-        int lastDot = packageName.lastIndexOf(".");
-        if (lastDot > 0) {
-            packageName = packageName.substring(0, lastDot);
-        } else {
-            // If no package (default package), set to empty string
-            packageName = "";
-        }
-
-        // Check if package matches any include filter
-        for (String filter : packageFilters) {
-            if (packageName.startsWith(filter)) {
+        // Check if class matches any include filter (FQCN prefix match)
+        for (String filter : includeClasses) {
+            if (className.startsWith(filter)) {
                 return true;
             }
         }

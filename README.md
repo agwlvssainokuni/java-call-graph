@@ -11,7 +11,7 @@ A sophisticated command-line tool for static call graph analysis of Java applica
 
 - **Multiple Analysis Algorithms**: CHA (Class Hierarchy Analysis) and RTA (Rapid Type Analysis)
 - **Automatic Interface Resolution**: SootUp 2.0.0 handles interface calls automatically
-- **Flexible Filtering**: Package-based inclusion and FQCN-based class exclusion
+- **Flexible Filtering**: FQCN-based class inclusion and exclusion
 - **Custom Entry Points**: Support for specifying custom methods as analysis starting points
 - **Flexible Input Support**: JAR files, class files, and directories
 - **Multiple Output Formats**: TXT (human-readable), CSV (data analysis), JSON (programmatic processing), and DOT (visualization)
@@ -54,28 +54,28 @@ java -jar build/libs/java-call-graph-*.jar your-application.jar
 ./gradlew bootRun --args="--verbose application.jar"
 ```
 
-### Package Filtering and Class Exclusion
+### Class Filtering and Exclusion
 ```bash
-# Focus analysis on specific package
-./gradlew bootRun --args="--package=com.example application.jar"
+# Focus analysis on specific class prefix (FQCN)
+./gradlew bootRun --args="--include=com.example application.jar"
 
-# Multiple packages
-./gradlew bootRun --args="--package=com.example,org.mycompany application.jar"
+# Multiple class prefixes
+./gradlew bootRun --args="--include=com.example,org.mycompany application.jar"
 
-# Exclude specific classes by FQCN prefix
+# Exclude specific classes by FQCN prefix  
 ./gradlew bootRun --args="--exclude=com.example.test application.jar"
 
 # Exclude multiple classes/packages
 ./gradlew bootRun --args="--exclude=com.example.test,org.junit application.jar"
 
 # Combine filtering and exclusion
-./gradlew bootRun --args="--package=com.example --exclude=com.example.test application.jar"
+./gradlew bootRun --args="--include=com.example --exclude=com.example.test application.jar"
 ```
 
 ### Algorithm Selection
 ```bash
 # Use RTA algorithm (recommended for interface resolution)
-./gradlew bootRun --args="--algorithm=rta --package=com.example application.jar"
+./gradlew bootRun --args="--algorithm=rta --include=com.example application.jar"
 
 # Use CHA algorithm (faster but less precise)
 ./gradlew bootRun --args="--algorithm=cha application.jar"
@@ -109,7 +109,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 |--------|-------------|---------|
 | `--algorithm=<algo>` | Analysis algorithm: `cha`, `rta` | `cha` |
 | `--entry=<method>` | Entry point method (ClassName.methodName format) | main methods |
-| `--package=<package>` | Filter by package name (comma-separated) | all packages |
+| `--include=<class>` | Include classes by FQCN prefix (comma-separated) | all classes |
 | `--exclude=<class>` | Exclude classes by FQCN prefix (comma-separated) | none |
 | `--exclude-jdk` | Exclude JDK classes from analysis | `false` |
 | `--output=<file>` | Output file for call graph | stdout |
@@ -225,7 +225,7 @@ digraph CallGraph {
 
 The tool provides flexible filtering options for focused analysis:
 
-- **Package Inclusion**: Use `--package=<package>` to focus on specific packages
+- **Class Inclusion**: Use `--include=<class>` to focus on specific class prefixes (FQCN)
 - **Class Exclusion**: Use `--exclude=<class>` for FQCN-based exclusion (supports both specific classes and package prefixes)
 - **Filter Precedence**: Exclusion filters are checked first, then inclusion filters are applied
 - **JDK Exclusion**: Use `--exclude-jdk` to remove standard library classes
@@ -234,7 +234,7 @@ The tool provides flexible filtering options for focused analysis:
 Example combinations:
 ```bash
 # Focus on business logic, exclude tests
-./gradlew bootRun --args="--package=com.example --exclude=com.example.test spring-app.jar"
+./gradlew bootRun --args="--include=com.example --exclude=com.example.test spring-app.jar"
 
 # Exclude multiple test frameworks
 ./gradlew bootRun --args="--exclude=org.junit,org.mockito,com.example.Mock spring-app.jar"
