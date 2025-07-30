@@ -97,12 +97,15 @@ src/main/resources/
 
 # Custom entry point analysis
 ./gradlew bootRun --args="--entry=InvokerController.invoke application.jar"
+
+# Wildcard entry points
+./gradlew bootRun --args="--entry=*Controller.handle* application.jar"
 ```
 
 ## CLI Options
 
 - `--algorithm=<algo>`: Algorithm: cha, rta (default: cha) - RTA recommended for interface calls
-- `--entry=<method>`: Entry point method (default: main methods) - supports ClassName.methodName format
+- `--entry=<method>`: Entry point method (default: main methods) - supports ClassName.methodName format and wildcards (*)
 - `--include=<class>`: Include classes by FQCN prefix - recommended for focused analysis
 - `--exclude=<class>`: Exclude classes by FQCN prefix - supports class and package exclusion
 - `--exclude-jdk`: Exclude JDK classes from analysis (default: false)

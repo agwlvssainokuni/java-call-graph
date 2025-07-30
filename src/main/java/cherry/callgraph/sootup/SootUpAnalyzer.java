@@ -193,10 +193,10 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
                         return true;
                     }
                     String actualClassName = sootClass.getName();
-                    return actualClassName.equals(className) || actualClassName.endsWith("." + className);
+                    return matchesPattern(actualClassName, className);
                 })
                 .flatMap(sootClass -> sootClass.getMethods().stream())
-                .filter(method -> method.getName().equals(methodName))
+                .filter(method -> matchesPattern(method.getName(), methodName))
                 .map(SootMethod::getSignature)
                 .collect(Collectors.toList());
     }
@@ -338,5 +338,27 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
                 className.startsWith("org.w3c.") ||
                 className.startsWith("org.xml.") ||
                 className.startsWith("org.ietf.");
+    }
+
+    /**
+     * Matches a name against a pattern with wildcard support.
+     * Supports * for matching any sequence of characters.
+     *
+     * @param name    the name to match
+     * @param pattern the pattern (may contain wildcards)
+     * @return true if the name matches the pattern
+     */
+    private boolean matchesPattern(@Nonnull String name, @Nonnull String pattern) {
+        if (!pattern.contains("*")) {
+            // No wildcards - check exact match or simple class name match for FQCN
+            return name.equals(pattern) || name.endsWith("." + pattern);
+        }
+
+        // Convert pattern to regex
+        String regex = pattern
+                .replace(".", "\\.")  // Escape dots
+                .replace("*", ".*");  // Replace * with .*
+
+        return name.matches(regex);
     }
 }

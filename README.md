@@ -88,6 +88,12 @@ java -jar build/libs/java-call-graph-*.jar your-application.jar
 
 # Multiple entry points
 ./gradlew bootRun --args="--entry=Controller.handleRequest,Service.processData application.jar"
+
+# Wildcard patterns for entry points
+./gradlew bootRun --args="--entry=*Controller.handle* application.jar"
+
+# Multiple wildcard patterns
+./gradlew bootRun --args="--entry=*Controller.*,*Service.process* application.jar"
 ```
 
 ### Output Formats
@@ -108,7 +114,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--algorithm=<algo>` | Analysis algorithm: `cha`, `rta` | `cha` |
-| `--entry=<method>` | Entry point method (ClassName.methodName format) | main methods |
+| `--entry=<method>` | Entry point method (ClassName.methodName format, supports wildcards *) | main methods |
 | `--include=<class>` | Include classes by FQCN prefix (comma-separated) | all classes |
 | `--exclude=<class>` | Exclude classes by FQCN prefix (comma-separated) | none |
 | `--exclude-jdk` | Exclude JDK classes from analysis | `false` |
@@ -149,7 +155,7 @@ Built on SootUp 2.0.0 with sophisticated features:
 - **Call Graph API**: Uses `getSourceMethodSignature()` and `getTargetMethodSignature()` for proper call edge extraction
 - **Duplicate Removal**: `LinkedHashSet` preserves insertion order while removing duplicate call edges
 - **View Management**: Proper SootUp JavaView configuration with input locations
-- **Entry Point Handling**: Automatic main method detection and custom entry point support
+- **Entry Point Handling**: Automatic main method detection and custom entry point support with wildcard patterns
 
 ## Supported Input Types
 

@@ -11,7 +11,7 @@ SootUp 2.0.0フレームワークとSpring Bootを使用したJavaアプリケ�
 
 - **複数の解析アルゴリズム**: CHA（クラス階層解析）とRTA（高速型解析）
 - **自動インタフェース解決**: SootUp 2.0.0がインタフェース呼び出しを自動的に処理
-- **柔軟なフィルタリング**: パッケージベースの包含とFQCNベースのクラス除外
+- **柔軟なフィルタリング**: FQCNベースのクラス包含と除外
 - **カスタムエントリポイント**: 解析開始点としてカスタムメソッドを指定可能
 - **柔軟な入力サポート**: JARファイル、クラスファイル、ディレクトリ
 - **複数の出力形式**: TXT（人間可読）、CSV（データ解析）、JSON（プログラム処理）、DOT（可視化）
@@ -54,13 +54,13 @@ java -jar build/libs/java-call-graph-*.jar your-application.jar
 ./gradlew bootRun --args="--verbose application.jar"
 ```
 
-### パッケージフィルタリングとクラス除外
+### クラスフィルタリングと除外
 ```bash
-# 特定のパッケージに解析を集中
-./gradlew bootRun --args="--package=com.example application.jar"
+# 特定のクラス前置詞（FQCN）に解析を集中
+./gradlew bootRun --args="--include=com.example application.jar"
 
-# 複数のパッケージ
-./gradlew bootRun --args="--package=com.example,org.mycompany application.jar"
+# 複数のクラス前置詞
+./gradlew bootRun --args="--include=com.example,org.mycompany application.jar"
 
 # FQCN前置詞で特定のクラスを除外
 ./gradlew bootRun --args="--exclude=com.example.test application.jar"
@@ -69,13 +69,13 @@ java -jar build/libs/java-call-graph-*.jar your-application.jar
 ./gradlew bootRun --args="--exclude=com.example.test,org.junit application.jar"
 
 # フィルタリングと除外の組み合わせ
-./gradlew bootRun --args="--package=com.example --exclude=com.example.test application.jar"
+./gradlew bootRun --args="--include=com.example --exclude=com.example.test application.jar"
 ```
 
 ### アルゴリズムの選択
 ```bash
 # RTAアルゴリズムを使用（インタフェース解決に推奨）
-./gradlew bootRun --args="--algorithm=rta --package=com.example application.jar"
+./gradlew bootRun --args="--algorithm=rta --include=com.example application.jar"
 
 # CHAアルゴリズムを使用（高速だが精度が低い）
 ./gradlew bootRun --args="--algorithm=cha application.jar"
@@ -88,12 +88,21 @@ java -jar build/libs/java-call-graph-*.jar your-application.jar
 
 # 複数のエントリポイント
 ./gradlew bootRun --args="--entry=Controller.handleRequest,Service.processData application.jar"
+
+# エントリポイントのワイルドカードパターン
+./gradlew bootRun --args="--entry=*Controller.handle* application.jar"
+
+# 複数のワイルドカードパターン
+./gradlew bootRun --args="--entry=*Controller.*,*Service.process* application.jar"
 ```
 
 ### 出力形式
 ```bash
 # スプレッドシート解析用のCSV形式
 ./gradlew bootRun --args="--format=csv --output=callgraph.csv application.jar"
+
+# プログラム処理用のJSON形式
+./gradlew bootRun --args="--format=json --output=callgraph.json application.jar"
 
 # Graphviz可視化用のDOT形式
 ./gradlew bootRun --args="--format=dot --output=callgraph.dot application.jar"
@@ -105,8 +114,8 @@ dot -Tpng callgraph.dot -o callgraph.png
 | オプション | 説明 | デフォルト |
 |-----------|------|-----------|
 | `--algorithm=<algo>` | 解析アルゴリズム: `cha`, `rta` | `cha` |
-| `--entry=<method>` | エントリポイントメソッド（ClassName.methodName形式） | mainメソッド |
-| `--package=<package>` | パッケージ名でフィルタ（カンマ区切り） | 全パッケージ |
+| `--entry=<method>` | エントリポイントメソッド（ClassName.methodName形式、ワイルドカード * 対応） | mainメソッド |
+| `--include=<class>` | FQCN前置詞でクラスを包含（カンマ区切り） | 全クラス |
 | `--exclude=<class>` | FQCN前置詞でクラスを除外（カンマ区切り） | なし |
 | `--exclude-jdk` | JDKクラスを解析から除外 | `false` |
 | `--output=<file>` | コールグラフの出力ファイル | 標準出力 |
@@ -146,7 +155,7 @@ SootUp 2.0.0上に構築された高機能な機能:
 - **コールグラフAPI**: 適切なコールエッジ抽出のため`getSourceMethodSignature()`と`getTargetMethodSignature()`を使用
 - **重複除去**: `LinkedHashSet`が挿入順序を保持しながら重複するコールエッジを除去
 - **ビュー管理**: 入力場所による適切なSootUp JavaView設定
-- **エントリポイント処理**: 自動mainメソッド検出とカスタムエントリポイントサポート
+- **エントリポイント処理**: 自動mainメソッド検出とワイルドカードパターン対応のカスタムエントリポイントサポート
 
 ## サポートされる入力タイプ
 
@@ -174,11 +183,32 @@ Classes (3):
 ```
 
 ### CSV形式
-スプレッドシート解析に適した構造化データ:
+スプレッドシート解析に適した構造化コールエッジデータ（冗長モードに関係なくコールエッジのみ出力）:
 ```csv
-caller_class,caller_method,target_class,target_method
+source_class,source_method,target_class,target_method
 "com.example.Main","main","com.example.Service","process"
 "com.example.Service","process","com.example.Repository","save"
+```
+
+### JSON形式
+プログラム処理とAPI統合のための構造化JSON出力:
+```json
+{
+  "callEdges": [
+    {
+      "sourceClass": "com.example.Main",
+      "sourceMethod": "main",
+      "targetClass": "com.example.Service",
+      "targetMethod": "process"
+    },
+    {
+      "sourceClass": "com.example.Service",  
+      "sourceMethod": "process",
+      "targetClass": "com.example.Repository",
+      "targetMethod": "save"
+    }
+  ]
+}
 ```
 
 ### DOT形式
@@ -201,7 +231,7 @@ digraph CallGraph {
 
 このツールは集中的な解析のための柔軟なフィルタリングオプションを提供します:
 
-- **パッケージ包含**: `--package=<package>`を使用して特定のパッケージに集中
+- **クラス包含**: `--include=<class>`を使用して特定のクラス前置詞（FQCN）に集中
 - **クラス除外**: FQCNベースの除外に`--exclude=<class>`を使用（特定のクラスとパッケージ前置詞の両方をサポート）
 - **フィルタ優先度**: 除外フィルタが最初にチェックされ、その後包含フィルタが適用されます
 - **JDK除外**: 標準ライブラリクラスを除去するために`--exclude-jdk`を使用
@@ -210,7 +240,7 @@ digraph CallGraph {
 使用例の組み合わせ:
 ```bash
 # ビジネスロジックに集中、テストを除外
-./gradlew bootRun --args="--package=com.example --exclude=com.example.test spring-app.jar"
+./gradlew bootRun --args="--include=com.example --exclude=com.example.test spring-app.jar"
 
 # 複数のテストフレームワークを除外
 ./gradlew bootRun --args="--exclude=org.junit,org.mockito,com.example.Mock spring-app.jar"
