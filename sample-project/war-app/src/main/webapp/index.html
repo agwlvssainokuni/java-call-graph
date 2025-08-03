@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Product Management - WAR Application</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .header { background-color: #f4f4f4; padding: 20px; border-radius: 5px; }
+        .content { margin-top: 20px; }
+        .api-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .endpoint { font-family: monospace; background-color: #e8e8e8; padding: 5px; }
+        ul { margin: 10px 0; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Product Management WAR Application</h1>
+        <p>Traditional servlet-based web application for demonstrating call graph analysis</p>
+    </div>
+
+    <div class="content">
+        <h2>Call Graph Analysis Demo</h2>
+        <p>This WAR application demonstrates a deep call hierarchy suitable for call graph analysis:</p>
+        
+        <h3>Call Hierarchy Levels (9 levels deep):</h3>
+        <ol>
+            <li><strong>Tomcat Container</strong> - Servlet container lifecycle</li>
+            <li><strong>ProductServlet</strong> - HTTP request handling (doGet, doPost, etc.)</li>
+            <li><strong>Servlet Methods</strong> - Request processing methods</li>
+            <li><strong>ProductService</strong> - Business logic layer</li>
+            <li><strong>Service Support</strong> - Validation, caching services</li>
+            <li><strong>ProductDao</strong> - Data access operations</li>
+            <li><strong>DAO Operations</strong> - Database query execution</li>
+            <li><strong>DatabaseUtil</strong> - Database utility operations</li>
+            <li><strong>Low-level Operations</strong> - Connection setup, logging</li>
+        </ol>
+
+        <div class="api-section">
+            <h3>Available REST API Endpoints:</h3>
+            <ul>
+                <li><span class="endpoint">GET /api/products</span> - Get all products</li>
+                <li><span class="endpoint">GET /api/products/{id}</span> - Get product by ID</li>
+                <li><span class="endpoint">POST /api/products</span> - Create new product</li>
+                <li><span class="endpoint">PUT /api/products/{id}</span> - Update product</li>
+                <li><span class="endpoint">DELETE /api/products/{id}</span> - Delete product</li>
+            </ul>
+        </div>
+
+        <div class="api-section">
+            <h3>Sample Product JSON:</h3>
+            <pre><code>{
+  "name": "Sample Product",
+  "description": "Product description",
+  "price": 29.99,
+  "quantity": 100,
+  "category": "Electronics"
+}</code></pre>
+        </div>
+
+        <div class="api-section">
+            <h3>Usage for Call Graph Analysis:</h3>
+            <p>To analyze this application with the call graph tool:</p>
+            <ol>
+                <li>Build the WAR: <code>./gradlew build</code></li>
+                <li>Analyze with tool: <code>./gradlew bootRun --args="--verbose --include=com.example.warapp build/libs/war-app-1.0.0.war"</code></li>
+                <li>Observe the multi-level call hierarchy in the output</li>
+            </ol>
+        </div>
+
+        <p><em>Note: This application uses manual dependency injection instead of frameworks like Spring to ensure clear visibility of method calls for static analysis.</em></p>
+    </div>
+</body>
+</html>
