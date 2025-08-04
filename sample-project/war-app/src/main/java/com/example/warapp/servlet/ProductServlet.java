@@ -8,13 +8,14 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.List;
 
 /**
  * Product management servlet for traditional WAR deployment.
  * This represents Level 2 in the call hierarchy (after Tomcat servlet container).
- * 
+ * <p>
  * Call hierarchy levels:
  * 1. Tomcat Container → Servlet methods
  * 2. ProductServlet methods
@@ -31,14 +32,14 @@ public class ProductServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         System.out.println("Servlet: Initializing ProductServlet");
-        
+
         // Level 3: Initialize service layer (manual dependency injection)
         this.productService = new ProductService();
         this.objectMapper = new ObjectMapper();
-        
+
         // Level 3: Additional initialization
         initializeServletResources();
-        
+
         System.out.println("Servlet: ProductServlet initialized successfully");
     }
 
@@ -46,12 +47,12 @@ public class ProductServlet extends HttpServlet {
      * Handle GET requests - Level 2 method (called by Tomcat)
      */
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         System.out.println("Servlet: Handling GET request");
-        
+
         String pathInfo = request.getPathInfo();
-        
+
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
                 // Level 3: Get all products
@@ -60,10 +61,10 @@ public class ProductServlet extends HttpServlet {
                 // Level 3: Get specific product
                 getProductById(request, response, pathInfo);
             }
-            
+
             // Level 3: Log request
             logRequest("GET", request.getRequestURI());
-            
+
         } catch (Exception e) {
             handleError(response, e);
         }
@@ -73,17 +74,17 @@ public class ProductServlet extends HttpServlet {
      * Handle POST requests - Level 2 method (called by Tomcat)
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         System.out.println("Servlet: Handling POST request");
-        
+
         try {
             // Level 3: Create new product
             createProduct(request, response);
-            
+
             // Level 3: Log request
             logRequest("POST", request.getRequestURI());
-            
+
         } catch (Exception e) {
             handleError(response, e);
         }
@@ -93,17 +94,17 @@ public class ProductServlet extends HttpServlet {
      * Handle PUT requests - Level 2 method (called by Tomcat)
      */
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         System.out.println("Servlet: Handling PUT request");
-        
+
         try {
             // Level 3: Update product
             updateProduct(request, response);
-            
+
             // Level 3: Log request
             logRequest("PUT", request.getRequestURI());
-            
+
         } catch (Exception e) {
             handleError(response, e);
         }
@@ -113,17 +114,17 @@ public class ProductServlet extends HttpServlet {
      * Handle DELETE requests - Level 2 method (called by Tomcat)
      */
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         System.out.println("Servlet: Handling DELETE request");
-        
+
         try {
             // Level 3: Delete product
             deleteProduct(request, response);
-            
+
             // Level 3: Log request
             logRequest("DELETE", request.getRequestURI());
-            
+
         } catch (Exception e) {
             handleError(response, e);
         }
@@ -134,20 +135,20 @@ public class ProductServlet extends HttpServlet {
     /**
      * Get all products - Level 3 method
      */
-    private void getAllProducts(HttpServletRequest request, HttpServletResponse response) 
+    private void getAllProducts(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         System.out.println("Servlet: Getting all products");
-        
+
         // Level 4: Service call
         List<Product> products = productService.findAllProducts();
-        
+
         // Level 4: Additional processing
         int totalCount = productService.getProductCount();
-        
+
         // Response processing
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         // Level 4: JSON serialization
         String jsonResponse = createProductListResponse(products, totalCount);
         response.getWriter().write(jsonResponse);
@@ -156,27 +157,27 @@ public class ProductServlet extends HttpServlet {
     /**
      * Get product by ID - Level 3 method
      */
-    private void getProductById(HttpServletRequest request, HttpServletResponse response, String pathInfo) 
+    private void getProductById(HttpServletRequest request, HttpServletResponse response, String pathInfo)
             throws IOException {
         System.out.println("Servlet: Getting product by ID");
-        
+
         try {
             Long id = extractIdFromPath(pathInfo);
-            
+
             // Level 4: Service call
             Product product = productService.findProductById(id);
-            
+
             if (product != null) {
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
-                
+
                 // Level 4: JSON serialization
                 String jsonResponse = objectMapper.writeValueAsString(product);
                 response.getWriter().write(jsonResponse);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Product not found");
             }
-            
+
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID");
         }
@@ -185,20 +186,20 @@ public class ProductServlet extends HttpServlet {
     /**
      * Create new product - Level 3 method
      */
-    private void createProduct(HttpServletRequest request, HttpServletResponse response) 
+    private void createProduct(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         System.out.println("Servlet: Creating new product");
-        
+
         // Level 4: Parse request body
         Product product = parseProductFromRequest(request);
-        
+
         // Level 4: Service call for creation
         Product createdProduct = productService.createProduct(product);
-        
+
         response.setStatus(HttpServletResponse.SC_CREATED);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         // Level 4: JSON serialization
         String jsonResponse = objectMapper.writeValueAsString(createdProduct);
         response.getWriter().write(jsonResponse);
@@ -207,24 +208,24 @@ public class ProductServlet extends HttpServlet {
     /**
      * Update product - Level 3 method
      */
-    private void updateProduct(HttpServletRequest request, HttpServletResponse response) 
+    private void updateProduct(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         System.out.println("Servlet: Updating product");
-        
+
         String pathInfo = request.getPathInfo();
         Long id = extractIdFromPath(pathInfo);
-        
+
         // Level 4: Parse request body
         Product product = parseProductFromRequest(request);
         product.setId(id);
-        
+
         // Level 4: Service call for update
         Product updatedProduct = productService.updateProduct(product);
-        
+
         if (updatedProduct != null) {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            
+
             // Level 4: JSON serialization
             String jsonResponse = objectMapper.writeValueAsString(updatedProduct);
             response.getWriter().write(jsonResponse);
@@ -236,16 +237,16 @@ public class ProductServlet extends HttpServlet {
     /**
      * Delete product - Level 3 method
      */
-    private void deleteProduct(HttpServletRequest request, HttpServletResponse response) 
+    private void deleteProduct(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         System.out.println("Servlet: Deleting product");
-        
+
         String pathInfo = request.getPathInfo();
         Long id = extractIdFromPath(pathInfo);
-        
+
         // Level 4: Service call for deletion
         boolean deleted = productService.deleteProduct(id);
-        
+
         if (deleted) {
             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
         } else {
@@ -260,10 +261,10 @@ public class ProductServlet extends HttpServlet {
      */
     private void initializeServletResources() {
         System.out.println("Servlet: Initializing servlet resources");
-        
+
         // Level 4: Setup configurations
         configureObjectMapper();
-        
+
         // Level 4: Initialize monitoring
         setupRequestMonitoring();
     }
@@ -273,10 +274,10 @@ public class ProductServlet extends HttpServlet {
      */
     private String createProductListResponse(List<Product> products, int totalCount) throws IOException {
         System.out.println("Servlet: Creating product list response");
-        
+
         // Level 5: Build response object
         var response = new ProductListResponse(products, totalCount);
-        
+
         return objectMapper.writeValueAsString(response);
     }
 
@@ -285,10 +286,10 @@ public class ProductServlet extends HttpServlet {
      */
     private Product parseProductFromRequest(HttpServletRequest request) throws IOException {
         System.out.println("Servlet: Parsing product from request");
-        
+
         // Level 5: Read request body
         String requestBody = readRequestBody(request);
-        
+
         return objectMapper.readValue(requestBody, Product.class);
     }
 
@@ -297,7 +298,7 @@ public class ProductServlet extends HttpServlet {
      */
     private Long extractIdFromPath(String pathInfo) {
         System.out.println("Servlet: Extracting ID from path");
-        
+
         // Level 5: Path parsing
         return parseIdFromPath(pathInfo);
     }
@@ -307,7 +308,7 @@ public class ProductServlet extends HttpServlet {
      */
     private void logRequest(String method, String uri) {
         System.out.println("Servlet: Logging request - " + method + " " + uri);
-        
+
         // Level 4: Detailed logging
         writeAccessLog(method, uri, System.currentTimeMillis());
     }
@@ -317,10 +318,10 @@ public class ProductServlet extends HttpServlet {
      */
     private void handleError(HttpServletResponse response, Exception e) throws IOException {
         System.err.println("Servlet: Handling error - " + e.getMessage());
-        
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                          "Internal server error: " + e.getMessage());
-        
+
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                "Internal server error: " + e.getMessage());
+
         // Level 4: Error logging
         logError(e);
     }
@@ -346,14 +347,14 @@ public class ProductServlet extends HttpServlet {
      */
     private String readRequestBody(HttpServletRequest request) throws IOException {
         System.out.println("Servlet: Reading request body");
-        
+
         StringBuilder buffer = new StringBuilder();
         String line;
-        
+
         while ((line = request.getReader().readLine()) != null) {
             buffer.append(line);
         }
-        
+
         return buffer.toString();
     }
 
@@ -362,7 +363,7 @@ public class ProductServlet extends HttpServlet {
      */
     private Long parseIdFromPath(String pathInfo) {
         System.out.println("Servlet: Parsing ID from path");
-        
+
         String[] pathSegments = pathInfo.split("/");
         return Long.parseLong(pathSegments[pathSegments.length - 1]);
     }
@@ -383,5 +384,6 @@ public class ProductServlet extends HttpServlet {
     }
 
     // Response DTO
-    private record ProductListResponse(List<Product> products, int totalCount) {}
+    private record ProductListResponse(List<Product> products, int totalCount) {
+    }
 }

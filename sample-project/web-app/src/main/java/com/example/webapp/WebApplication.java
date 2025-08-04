@@ -6,12 +6,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * Spring Boot Web Application for task management.
  * Demonstrates call graph analysis with REST API and layered architecture.
- * 
+ * <p>
  * Call hierarchy levels:
  * 1. WebApplication.main()
  * 2. Spring Boot starts → Controllers
  * 3. TaskController methods
- * 4. TaskService methods  
+ * 4. TaskService methods
  * 5. TaskRepository methods
  * 6. Database/utility operations
  */

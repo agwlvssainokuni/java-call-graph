@@ -1,6 +1,7 @@
 package com.example.warapp.service;
 
 import com.example.warapp.model.Product;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,15 +25,15 @@ public class ProductCacheService {
      */
     public Product getFromCache(Long id) {
         System.out.println("Cache: Getting product from cache: " + id);
-        
+
         // Level 6: Cache lookup
         Product product = performCacheLookup(id);
-        
+
         if (product != null) {
             // Level 6: Update access statistics
             updateAccessStatistics(id);
         }
-        
+
         return product;
     }
 
@@ -41,10 +42,10 @@ public class ProductCacheService {
      */
     public void putInCache(Product product) {
         System.out.println("Cache: Putting product in cache: " + product.getId());
-        
+
         // Level 6: Cache storage
         performCacheStorage(product);
-        
+
         // Level 6: Update cache statistics
         updateCacheStatistics(product.getId());
     }
@@ -54,10 +55,10 @@ public class ProductCacheService {
      */
     public void updateCacheEntry(Product product) {
         System.out.println("Cache: Updating cache entry: " + product.getId());
-        
+
         // Level 6: Update cache
         performCacheUpdate(product);
-        
+
         // Level 6: Invalidate category cache
         invalidateCategoryCache(product.getCategory());
     }
@@ -67,13 +68,13 @@ public class ProductCacheService {
      */
     public void removeFromCache(Long id) {
         System.out.println("Cache: Removing product from cache: " + id);
-        
+
         // Level 6: Get product before removal (for category invalidation)
         Product product = cache.get(id);
-        
+
         // Level 6: Cache removal
         performCacheRemoval(id);
-        
+
         if (product != null) {
             // Level 6: Invalidate category cache
             invalidateCategoryCache(product.getCategory());
@@ -85,10 +86,10 @@ public class ProductCacheService {
      */
     public void updateCache(List<Product> products) {
         System.out.println("Cache: Updating cache with product list");
-        
+
         // Level 6: Bulk cache update
         performBulkCacheUpdate(products);
-        
+
         // Level 6: Update category cache
         updateCategoryCache(products);
     }
@@ -98,10 +99,10 @@ public class ProductCacheService {
      */
     public void clearCache() {
         System.out.println("Cache: Clearing all cache");
-        
+
         // Level 6: Cache clearing
         performCacheClear();
-        
+
         // Level 6: Reset statistics
         resetCacheStatistics();
     }
@@ -113,10 +114,10 @@ public class ProductCacheService {
      */
     private void initializeCache() {
         System.out.println("Cache: Initializing cache system");
-        
+
         // Level 7: Cache configuration
         configureCacheSettings();
-        
+
         // Level 7: Setup cache monitoring
         setupCacheMonitoring();
     }
@@ -126,7 +127,7 @@ public class ProductCacheService {
      */
     private Product performCacheLookup(Long id) {
         System.out.println("Cache: Performing cache lookup");
-        
+
         // Level 7: Direct cache access
         return executeCacheLookup(id);
     }
@@ -136,9 +137,9 @@ public class ProductCacheService {
      */
     private void performCacheStorage(Product product) {
         System.out.println("Cache: Performing cache storage");
-        
+
         cache.put(product.getId(), product);
-        
+
         // Level 7: Update storage metrics
         updateStorageMetrics(product.getId());
     }
@@ -148,9 +149,9 @@ public class ProductCacheService {
      */
     private void performCacheUpdate(Product product) {
         System.out.println("Cache: Performing cache update");
-        
+
         cache.put(product.getId(), product);
-        
+
         // Level 7: Update modification metrics
         updateModificationMetrics(product.getId());
     }
@@ -160,9 +161,9 @@ public class ProductCacheService {
      */
     private void performCacheRemoval(Long id) {
         System.out.println("Cache: Performing cache removal");
-        
+
         cache.remove(id);
-        
+
         // Level 7: Update removal metrics
         updateRemovalMetrics(id);
     }
@@ -172,11 +173,11 @@ public class ProductCacheService {
      */
     private void performBulkCacheUpdate(List<Product> products) {
         System.out.println("Cache: Performing bulk cache update");
-        
+
         for (Product product : products) {
             cache.put(product.getId(), product);
         }
-        
+
         // Level 7: Update bulk metrics
         updateBulkUpdateMetrics(products.size());
     }
@@ -186,7 +187,7 @@ public class ProductCacheService {
      */
     private void updateCategoryCache(List<Product> products) {
         System.out.println("Cache: Updating category cache");
-        
+
         // Level 7: Group by category and cache
         groupAndCacheByCategory(products);
     }
@@ -196,9 +197,9 @@ public class ProductCacheService {
      */
     private void invalidateCategoryCache(String category) {
         System.out.println("Cache: Invalidating category cache: " + category);
-        
+
         categoryCache.remove(category);
-        
+
         // Level 7: Update invalidation metrics
         updateInvalidationMetrics(category);
     }
@@ -208,10 +209,10 @@ public class ProductCacheService {
      */
     private void performCacheClear() {
         System.out.println("Cache: Performing cache clear");
-        
+
         cache.clear();
         categoryCache.clear();
-        
+
         // Level 7: Update clear metrics
         updateClearMetrics();
     }
@@ -221,7 +222,7 @@ public class ProductCacheService {
      */
     private void updateAccessStatistics(Long id) {
         System.out.println("Cache: Updating access statistics");
-        
+
         // Level 7: Record access event
         recordAccessEvent(id);
     }
@@ -231,7 +232,7 @@ public class ProductCacheService {
      */
     private void updateCacheStatistics(Long id) {
         System.out.println("Cache: Updating cache statistics");
-        
+
         // Level 7: Record cache event
         recordCacheEvent(id);
     }
@@ -241,7 +242,7 @@ public class ProductCacheService {
      */
     private void resetCacheStatistics() {
         System.out.println("Cache: Resetting cache statistics");
-        
+
         // Level 7: Reset all metrics
         resetAllMetrics();
     }

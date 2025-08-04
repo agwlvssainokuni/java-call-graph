@@ -18,7 +18,7 @@ public class FileSystemUtil {
      */
     public boolean fileExists(String filePath) {
         System.out.println("FileUtil: Checking if file exists: " + filePath);
-        
+
         // Level 7: Low-level file system operation
         return performFileExistsCheck(filePath);
     }
@@ -28,7 +28,7 @@ public class FileSystemUtil {
      */
     public long getFileSize(String filePath) {
         System.out.println("FileUtil: Getting file size for " + filePath);
-        
+
         try {
             // Level 7: File system call
             return Files.size(Paths.get(filePath));
@@ -43,7 +43,7 @@ public class FileSystemUtil {
      */
     public String getFileName(String filePath) {
         System.out.println("FileUtil: Extracting file name from " + filePath);
-        
+
         // Level 7: String manipulation
         return extractFileName(filePath);
     }
@@ -53,7 +53,7 @@ public class FileSystemUtil {
      */
     public String readFileAsString(String filePath) {
         System.out.println("FileUtil: Reading file content from " + filePath);
-        
+
         try {
             // Level 7: File system read operation
             return Files.readString(Paths.get(filePath));
@@ -68,11 +68,11 @@ public class FileSystemUtil {
      */
     public void writeStringToFile(String filePath, String content) {
         System.out.println("FileUtil: Writing content to " + filePath);
-        
+
         try {
             // Level 7: Ensure directory exists
             ensureDirectoryExists(filePath);
-            
+
             // Level 7: File system write operation
             Files.writeString(Paths.get(filePath), content);
         } catch (IOException e) {
@@ -85,13 +85,13 @@ public class FileSystemUtil {
      */
     public void appendToLogFile(String logEntry) {
         System.out.println("FileUtil: Appending to log file");
-        
+
         try {
             String logPath = "processing.log";
-            
+
             // Level 8: File system append operation
-            Files.writeString(Paths.get(logPath), logEntry + "\n", 
-                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Files.writeString(Paths.get(logPath), logEntry + "\n",
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
             System.err.println("Error writing to log: " + e.getMessage());
         }
@@ -102,7 +102,7 @@ public class FileSystemUtil {
      */
     public String getResultPath(String originalPath) {
         System.out.println("FileUtil: Generating result path for " + originalPath);
-        
+
         // Level 7: Path manipulation
         return buildResultPath(originalPath);
     }
@@ -112,7 +112,7 @@ public class FileSystemUtil {
      */
     public String getMetadataPath(String originalPath) {
         System.out.println("FileUtil: Generating metadata path for " + originalPath);
-        
+
         // Level 8: Path manipulation
         return buildMetadataPath(originalPath);
     }
@@ -124,7 +124,7 @@ public class FileSystemUtil {
      */
     private boolean performFileExistsCheck(String filePath) {
         System.out.println("FileUtil: Performing low-level file existence check");
-        
+
         File file = new File(filePath);
         return file.exists() && file.isFile();
     }
@@ -134,7 +134,7 @@ public class FileSystemUtil {
      */
     private String extractFileName(String filePath) {
         System.out.println("FileUtil: Extracting file name");
-        
+
         Path path = Paths.get(filePath);
         return path.getFileName().toString();
     }
@@ -144,10 +144,10 @@ public class FileSystemUtil {
      */
     private void ensureDirectoryExists(String filePath) throws IOException {
         System.out.println("FileUtil: Ensuring directory exists");
-        
+
         Path path = Paths.get(filePath);
         Path parentDir = path.getParent();
-        
+
         if (parentDir != null && !Files.exists(parentDir)) {
             Files.createDirectories(parentDir);
         }
@@ -158,7 +158,7 @@ public class FileSystemUtil {
      */
     private String buildResultPath(String originalPath) {
         System.out.println("FileUtil: Building result path");
-        
+
         return originalPath + ".analysis";
     }
 
@@ -167,7 +167,7 @@ public class FileSystemUtil {
      */
     private String buildMetadataPath(String originalPath) {
         System.out.println("FileUtil: Building metadata path (deepest level)");
-        
+
         return originalPath + ".metadata";
     }
 }

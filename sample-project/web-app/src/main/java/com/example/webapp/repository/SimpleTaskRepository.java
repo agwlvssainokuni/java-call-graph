@@ -2,6 +2,7 @@ package com.example.webapp.repository;
 
 import com.example.webapp.model.Task;
 import org.springframework.stereotype.Repository;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,15 +29,15 @@ public class SimpleTaskRepository {
      */
     public Task findById(Long id) {
         System.out.println("Repository: Finding task by ID: " + id);
-        
+
         // Level 6: Data access operation
         var task = performFindById(id);
-        
+
         if (task != null) {
             // Level 6: Post-retrieval processing
             enrichTaskOnRetrieval(task);
         }
-        
+
         return task;
     }
 
@@ -45,13 +46,13 @@ public class SimpleTaskRepository {
      */
     public List<Task> findAll() {
         System.out.println("Repository: Finding all tasks");
-        
+
         // Level 6: Data access operation
         var allTasks = performFindAll();
-        
+
         // Level 6: Post-processing
         processTaskList(allTasks);
-        
+
         return allTasks;
     }
 
@@ -60,16 +61,16 @@ public class SimpleTaskRepository {
      */
     public Task save(Task task) {
         System.out.println("Repository: Saving task: " + task.getTitle());
-        
+
         // Level 6: Pre-save processing
         preprocessTaskForSave(task);
-        
+
         // Level 6: Actual save operation
         var savedTask = performSave(task);
-        
+
         // Level 6: Post-save processing
         postprocessAfterSave(savedTask);
-        
+
         return savedTask;
     }
 
@@ -78,16 +79,16 @@ public class SimpleTaskRepository {
      */
     public void deleteById(Long id) {
         System.out.println("Repository: Deleting task by ID: " + id);
-        
+
         // Level 6: Pre-deletion processing
         var task = tasks.get(id);
         if (task != null) {
             preprocessForDeletion(task);
         }
-        
+
         // Level 6: Actual deletion
         performDelete(id);
-        
+
         // Level 6: Post-deletion cleanup
         cleanupAfterDeletion(id);
     }
@@ -97,7 +98,7 @@ public class SimpleTaskRepository {
      */
     public int countAll() {
         System.out.println("Repository: Counting all tasks");
-        
+
         // Level 6: Count operation
         return performCountAll();
     }
@@ -107,7 +108,7 @@ public class SimpleTaskRepository {
      */
     public int countByStatus(Task.TaskStatus status) {
         System.out.println("Repository: Counting tasks by status: " + status);
-        
+
         // Level 6: Filtered count operation
         return performCountByStatus(status);
     }
@@ -117,7 +118,7 @@ public class SimpleTaskRepository {
      */
     public List<Task> findByStatus(Task.TaskStatus status) {
         System.out.println("Repository: Finding tasks by status: " + status);
-        
+
         // Level 6: Filtered search
         return performFindByStatus(status);
     }
@@ -127,7 +128,7 @@ public class SimpleTaskRepository {
      */
     public List<Task> findTasksCreatedAfter(Long timestamp) {
         System.out.println("Repository: Finding tasks created after: " + timestamp);
-        
+
         // Level 6: Time-based filtering
         return performTimeBasedSearch(timestamp);
     }
@@ -137,7 +138,7 @@ public class SimpleTaskRepository {
      */
     public List<Task> findByTitleContaining(String keyword) {
         System.out.println("Repository: Searching tasks by keyword: " + keyword);
-        
+
         // Level 6: Text search operation
         return performTextSearch(keyword);
     }
@@ -165,11 +166,11 @@ public class SimpleTaskRepository {
      */
     private Task performSave(Task task) {
         System.out.println("Repository: Performing save operation");
-        
+
         if (task.getId() == null) {
             task.setId(idGenerator.getAndIncrement());
         }
-        
+
         tasks.put(task.getId(), task);
         return task;
     }
@@ -195,7 +196,7 @@ public class SimpleTaskRepository {
      */
     private int performCountByStatus(Task.TaskStatus status) {
         System.out.println("Repository: Performing count by status operation");
-        
+
         return (int) tasks.values().stream()
                 .filter(task -> task.getStatus() == status)
                 .count();
@@ -206,7 +207,7 @@ public class SimpleTaskRepository {
      */
     private List<Task> performFindByStatus(Task.TaskStatus status) {
         System.out.println("Repository: Performing find by status operation");
-        
+
         return tasks.values().stream()
                 .filter(task -> task.getStatus() == status)
                 .collect(Collectors.toList());
@@ -217,7 +218,7 @@ public class SimpleTaskRepository {
      */
     private List<Task> performTimeBasedSearch(Long timestamp) {
         System.out.println("Repository: Performing time-based search");
-        
+
         return tasks.values().stream()
                 .filter(task -> task.getCreatedAt() > timestamp)
                 .collect(Collectors.toList());
@@ -228,7 +229,7 @@ public class SimpleTaskRepository {
      */
     private List<Task> performTextSearch(String keyword) {
         System.out.println("Repository: Performing text search");
-        
+
         return tasks.values().stream()
                 .filter(task -> task.getTitle().toLowerCase().contains(keyword.toLowerCase()))
                 .collect(Collectors.toList());
@@ -239,7 +240,7 @@ public class SimpleTaskRepository {
      */
     private void enrichTaskOnRetrieval(Task task) {
         System.out.println("Repository: Enriching task on retrieval");
-        
+
         // Level 7: Additional data enrichment
         addMetadataToTask(task);
     }
@@ -249,7 +250,7 @@ public class SimpleTaskRepository {
      */
     private void processTaskList(List<Task> tasks) {
         System.out.println("Repository: Processing task list");
-        
+
         // Level 7: List processing
         sortTaskList(tasks);
     }
@@ -259,7 +260,7 @@ public class SimpleTaskRepository {
      */
     private void preprocessTaskForSave(Task task) {
         System.out.println("Repository: Preprocessing task for save");
-        
+
         // Level 7: Pre-save validation and setup
         validateTaskForSave(task);
     }
@@ -269,7 +270,7 @@ public class SimpleTaskRepository {
      */
     private void postprocessAfterSave(Task task) {
         System.out.println("Repository: Postprocessing after save");
-        
+
         // Level 7: Post-save operations
         updateTaskIndex(task);
     }
@@ -279,7 +280,7 @@ public class SimpleTaskRepository {
      */
     private void preprocessForDeletion(Task task) {
         System.out.println("Repository: Preprocessing for deletion");
-        
+
         // Level 7: Pre-deletion operations
         backupTaskBeforeDeletion(task);
     }
@@ -289,7 +290,7 @@ public class SimpleTaskRepository {
      */
     private void cleanupAfterDeletion(Long id) {
         System.out.println("Repository: Cleaning up after deletion");
-        
+
         // Level 7: Post-deletion cleanup
         removeFromIndexes(id);
     }
@@ -299,7 +300,7 @@ public class SimpleTaskRepository {
      */
     private void initializeSampleData() {
         System.out.println("Repository: Initializing sample data");
-        
+
         // Level 7: Data setup
         createSampleTasks();
     }
@@ -354,7 +355,7 @@ public class SimpleTaskRepository {
      */
     private void createSampleTasks() {
         System.out.println("Repository: Creating sample tasks");
-        
+
         save(new Task("Setup Development Environment", "Install and configure development tools"));
         save(new Task("Design Database Schema", "Create entity relationship diagram"));
         save(new Task("Implement REST API", "Create controllers and services"));

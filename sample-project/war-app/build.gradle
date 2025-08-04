@@ -22,17 +22,17 @@ repositories {
 dependencies {
     // Servlet API
     compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
-    
+
     // JSON processing
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.19.2'
-    
+
     // Database (H2 for simplicity)
     implementation 'com.h2database:h2:2.3.232'
-    
+
     // JDBC Template (lightweight alternative to full framework)
     implementation 'org.springframework:spring-jdbc:6.2.9'
     implementation 'org.springframework:spring-context:6.2.9'
-    
+
     // Test dependencies
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:5.17.0'

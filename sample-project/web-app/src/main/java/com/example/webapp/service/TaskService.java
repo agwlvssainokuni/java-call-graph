@@ -3,6 +3,7 @@ package com.example.webapp.service;
 import com.example.webapp.model.Task;
 import com.example.webapp.repository.SimpleTaskRepository;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 /**
@@ -16,9 +17,9 @@ public class TaskService {
     private final TaskValidationService validationService;
     private final TaskNotificationService notificationService;
 
-    public TaskService(SimpleTaskRepository taskRepository, 
-                      TaskValidationService validationService,
-                      TaskNotificationService notificationService) {
+    public TaskService(SimpleTaskRepository taskRepository,
+                       TaskValidationService validationService,
+                       TaskNotificationService notificationService) {
         this.taskRepository = taskRepository;
         this.validationService = validationService;
         this.notificationService = notificationService;
@@ -29,13 +30,13 @@ public class TaskService {
      */
     public List<Task> findAllTasks() {
         System.out.println("Service: Finding all tasks");
-        
+
         // Level 5: Repository call
         var tasks = taskRepository.findAll();
-        
+
         // Level 5: Additional processing
         preprocessTasks(tasks);
-        
+
         return tasks;
     }
 
@@ -44,15 +45,15 @@ public class TaskService {
      */
     public Task findTaskById(Long id) {
         System.out.println("Service: Finding task by ID: " + id);
-        
+
         // Level 5: Repository call
         var task = taskRepository.findById(id);
-        
+
         if (task != null) {
             // Level 5: Validation
             validationService.validateTaskAccess(task);
         }
-        
+
         return task;
     }
 
@@ -61,17 +62,17 @@ public class TaskService {
      */
     public Task createTask(String title, String description) {
         System.out.println("Service: Creating task with title: " + title);
-        
+
         // Level 5: Validation
         validationService.validateTaskData(title, description);
-        
+
         // Level 5: Create and save
         var task = new Task(title, description);
         var savedTask = taskRepository.save(task);
-        
+
         // Level 5: Post-creation processing
         processNewTask(savedTask);
-        
+
         return savedTask;
     }
 
@@ -80,22 +81,22 @@ public class TaskService {
      */
     public Task updateTaskStatus(Long id, Task.TaskStatus newStatus) {
         System.out.println("Service: Updating task status for ID: " + id);
-        
+
         // Level 5: Repository call
         var task = taskRepository.findById(id);
-        
+
         if (task != null) {
             // Level 5: Validation
             validationService.validateStatusTransition(task.getStatus(), newStatus);
-            
+
             // Level 5: Update
             task.setStatus(newStatus);
             task = taskRepository.save(task);
-            
+
             // Level 5: Additional processing
             handleStatusChange(task, newStatus);
         }
-        
+
         return task;
     }
 
@@ -104,23 +105,23 @@ public class TaskService {
      */
     public boolean deleteTask(Long id) {
         System.out.println("Service: Deleting task ID: " + id);
-        
+
         // Level 5: Repository operations
         var task = taskRepository.findById(id);
-        
+
         if (task != null) {
             // Level 5: Pre-deletion validation
             validationService.validateTaskDeletion(task);
-            
+
             // Level 5: Delete
             taskRepository.deleteById(id);
-            
+
             // Level 5: Post-deletion cleanup
             cleanupAfterDeletion(task);
-            
+
             return true;
         }
-        
+
         return false;
     }
 
@@ -129,7 +130,7 @@ public class TaskService {
      */
     public int getTotalTaskCount() {
         System.out.println("Service: Getting total task count");
-        
+
         // Level 5: Repository call
         return taskRepository.countAll();
     }
@@ -139,17 +140,17 @@ public class TaskService {
      */
     public int getCompletedTaskCount() {
         System.out.println("Service: Getting completed task count");
-        
+
         // Level 5: Repository call
         return taskRepository.countByStatus(Task.TaskStatus.COMPLETED);
     }
 
     /**
-     * Get pending task count - Level 4 method  
+     * Get pending task count - Level 4 method
      */
     public int getPendingTaskCount() {
         System.out.println("Service: Getting pending task count");
-        
+
         // Level 5: Repository call
         return taskRepository.countByStatus(Task.TaskStatus.PENDING);
     }
@@ -159,7 +160,7 @@ public class TaskService {
      */
     public void notifyTaskCreated(Task task) {
         System.out.println("Service: Notifying task created: " + task.getTitle());
-        
+
         // Level 5: Notification service
         notificationService.sendTaskCreatedNotification(task);
     }
@@ -169,10 +170,10 @@ public class TaskService {
      */
     public void auditStatusChange(Task task, Task.TaskStatus newStatus) {
         System.out.println("Service: Auditing status change for task: " + task.getId());
-        
+
         // Level 5: Audit logging
         logStatusChange(task, newStatus);
-        
+
         // Level 5: Notification
         notificationService.sendStatusChangeNotification(task, newStatus);
     }
@@ -184,7 +185,7 @@ public class TaskService {
      */
     private void preprocessTasks(List<Task> tasks) {
         System.out.println("Service: Preprocessing " + tasks.size() + " tasks");
-        
+
         for (Task task : tasks) {
             // Level 6: Individual task processing
             enrichTaskData(task);
@@ -196,10 +197,10 @@ public class TaskService {
      */
     private void processNewTask(Task task) {
         System.out.println("Service: Processing new task");
-        
+
         // Level 6: Initialize task metadata
         initializeTaskMetadata(task);
-        
+
         // Level 6: Setup task tracking
         setupTaskTracking(task);
     }
@@ -209,7 +210,7 @@ public class TaskService {
      */
     private void handleStatusChange(Task task, Task.TaskStatus newStatus) {
         System.out.println("Service: Handling status change");
-        
+
         // Level 6: Status-specific processing
         executeStatusChangeActions(task, newStatus);
     }
@@ -219,7 +220,7 @@ public class TaskService {
      */
     private void cleanupAfterDeletion(Task task) {
         System.out.println("Service: Cleaning up after task deletion");
-        
+
         // Level 6: Remove related data
         removeTaskDependencies(task);
     }
@@ -229,7 +230,7 @@ public class TaskService {
      */
     private void logStatusChange(Task task, Task.TaskStatus newStatus) {
         System.out.println("Service: Logging status change");
-        
+
         // Level 6: Detailed audit logging
         writeAuditLog(task, newStatus);
     }

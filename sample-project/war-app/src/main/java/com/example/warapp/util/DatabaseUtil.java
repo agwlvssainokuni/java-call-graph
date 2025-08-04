@@ -1,6 +1,7 @@
 package com.example.warapp.util;
 
 import com.example.warapp.model.Product;
+
 import java.util.List;
 
 /**
@@ -14,7 +15,7 @@ public class DatabaseUtil {
      */
     public void initializeConnection() {
         System.out.println("DatabaseUtil: Initializing database connection");
-        
+
         // Level 9: Low-level connection setup (deepest level)
         performConnectionSetup();
     }
@@ -24,7 +25,7 @@ public class DatabaseUtil {
      */
     public void createSchema() {
         System.out.println("DatabaseUtil: Creating database schema");
-        
+
         // Level 9: Schema creation
         executeSchemaCreation();
     }
@@ -34,7 +35,7 @@ public class DatabaseUtil {
      */
     public void logOperation(String operation, Long id) {
         System.out.println("DatabaseUtil: Logging operation - " + operation + " for ID: " + id);
-        
+
         // Level 9: Write to operation log
         writeOperationLog(operation, id, System.currentTimeMillis());
     }
@@ -44,7 +45,7 @@ public class DatabaseUtil {
      */
     public void enhanceResults(List<Product> products) {
         System.out.println("DatabaseUtil: Enhancing query results");
-        
+
         for (Product product : products) {
             // Level 9: Individual enhancement
             enhanceIndividualProduct(product);
@@ -56,7 +57,7 @@ public class DatabaseUtil {
      */
     public void enhanceProduct(Product product) {
         System.out.println("DatabaseUtil: Enhancing single product");
-        
+
         // Level 9: Product enhancement
         enhanceIndividualProduct(product);
     }
@@ -66,7 +67,7 @@ public class DatabaseUtil {
      */
     public void validateProduct(Product product) {
         System.out.println("DatabaseUtil: Validating product");
-        
+
         // Level 9: Validation checks
         performValidationChecks(product);
     }
@@ -76,7 +77,7 @@ public class DatabaseUtil {
      */
     public void prepareForSave(Product product) {
         System.out.println("DatabaseUtil: Preparing for save");
-        
+
         // Level 9: Save preparation
         executeSavePreparation(product);
     }
@@ -86,7 +87,7 @@ public class DatabaseUtil {
      */
     public void prepareForUpdate(Product product) {
         System.out.println("DatabaseUtil: Preparing for update");
-        
+
         // Level 9: Update preparation
         executeUpdatePreparation(product);
     }
@@ -96,7 +97,7 @@ public class DatabaseUtil {
      */
     public void validateForDeletion(Long id) {
         System.out.println("DatabaseUtil: Validating for deletion");
-        
+
         // Level 9: Deletion validation
         performDeletionValidation(id);
     }
@@ -106,7 +107,7 @@ public class DatabaseUtil {
      */
     public void prepareForDeletion(Long id) {
         System.out.println("DatabaseUtil: Preparing for deletion");
-        
+
         // Level 9: Deletion preparation
         executeDeletionPreparation(id);
     }
@@ -116,7 +117,7 @@ public class DatabaseUtil {
      */
     public void notifyListeners(String event, Long id) {
         System.out.println("DatabaseUtil: Notifying listeners - " + event + " for ID: " + id);
-        
+
         // Level 9: Event notification
         sendEventNotification(event, id);
     }
