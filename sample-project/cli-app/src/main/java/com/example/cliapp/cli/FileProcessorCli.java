@@ -1,6 +1,7 @@
 package com.example.cliapp.cli;
 
 import com.example.cliapp.service.FileProcessingService;
+
 import java.util.List;
 
 /**
@@ -23,15 +24,15 @@ public class FileProcessorCli {
      */
     public void processFile(String filePath) {
         System.out.println("CLI: Processing file: " + filePath);
-        
+
         try {
             // Level 4: Call to service layer
             var result = fileProcessingService.analyzeFile(filePath);
             System.out.println("CLI: File analysis result - " + result.summary());
-            
+
             // Another service call
             fileProcessingService.validateFile(filePath);
-            
+
         } catch (Exception e) {
             System.err.println("CLI: Failed to process file " + filePath + ": " + e.getMessage());
         }
@@ -42,7 +43,7 @@ public class FileProcessorCli {
      */
     private void printProcessingSummary(int fileCount) {
         System.out.println("CLI: Generating processing summary...");
-        
+
         // Level 4: Another service call
         var stats = fileProcessingService.getProcessingStatistics();
         System.out.println("CLI: Processed " + fileCount + " files. " + stats);

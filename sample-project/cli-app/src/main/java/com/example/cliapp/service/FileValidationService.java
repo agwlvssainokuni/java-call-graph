@@ -10,7 +10,7 @@ public class FileValidationService {
      */
     public void validateFileStructure(FileProcessingService.FileInfo fileInfo) {
         System.out.println("Validation: Checking file structure for " + fileInfo.name());
-        
+
         // Level 6: Internal validation logic
         checkFileExtension(fileInfo.name());
         checkFileSize(fileInfo.size());
@@ -21,7 +21,7 @@ public class FileValidationService {
      */
     public void validateFilePermissions(String filePath) {
         System.out.println("Validation: Checking file permissions for " + filePath);
-        
+
         // Level 6: Permission checks
         checkReadPermission(filePath);
         checkWritePermission(filePath);
@@ -32,7 +32,7 @@ public class FileValidationService {
      */
     private void checkFileExtension(String fileName) {
         System.out.println("Validation: Checking file extension");
-        
+
         if (!fileName.contains(".")) {
             System.out.println("Warning: File has no extension");
         }
@@ -43,7 +43,7 @@ public class FileValidationService {
      */
     private void checkFileSize(long size) {
         System.out.println("Validation: Checking file size");
-        
+
         if (size > 10_000_000) { // 10MB
             System.out.println("Warning: Large file detected");
         }

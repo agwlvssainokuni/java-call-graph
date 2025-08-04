@@ -15,13 +15,13 @@ public class TaskNotificationService {
      */
     public void sendTaskCreatedNotification(Task task) {
         System.out.println("Notification: Sending task created notification for: " + task.getTitle());
-        
+
         // Level 6: Prepare notification
         var notification = prepareCreatedNotification(task);
-        
+
         // Level 6: Send notification
         sendNotification(notification);
-        
+
         // Level 6: Log notification
         logNotificationSent("TASK_CREATED", task.getId());
     }
@@ -31,13 +31,13 @@ public class TaskNotificationService {
      */
     public void sendStatusChangeNotification(Task task, Task.TaskStatus newStatus) {
         System.out.println("Notification: Sending status change notification");
-        
+
         // Level 6: Prepare notification
         var notification = prepareStatusChangeNotification(task, newStatus);
-        
+
         // Level 6: Send notification
         sendNotification(notification);
-        
+
         // Level 6: Log notification
         logNotificationSent("STATUS_CHANGE", task.getId());
     }
@@ -47,11 +47,11 @@ public class TaskNotificationService {
      */
     private TaskNotification prepareCreatedNotification(Task task) {
         System.out.println("Notification: Preparing created notification");
-        
+
         // Level 7: Build notification content
         String subject = buildCreatedSubject(task);
         String body = buildCreatedBody(task);
-        
+
         return new TaskNotification(subject, body, task.getId());
     }
 
@@ -60,11 +60,11 @@ public class TaskNotificationService {
      */
     private TaskNotification prepareStatusChangeNotification(Task task, Task.TaskStatus newStatus) {
         System.out.println("Notification: Preparing status change notification");
-        
+
         // Level 7: Build notification content
         String subject = buildStatusChangeSubject(task, newStatus);
         String body = buildStatusChangeBody(task, newStatus);
-        
+
         return new TaskNotification(subject, body, task.getId());
     }
 
@@ -73,7 +73,7 @@ public class TaskNotificationService {
      */
     private void sendNotification(TaskNotification notification) {
         System.out.println("Notification: Sending notification - " + notification.subject());
-        
+
         // Level 7: Actual sending logic
         deliverNotification(notification);
     }
@@ -83,7 +83,7 @@ public class TaskNotificationService {
      */
     private void logNotificationSent(String type, Long taskId) {
         System.out.println("Notification: Logging notification sent");
-        
+
         // Level 7: Write to notification log
         writeNotificationLog(type, taskId, System.currentTimeMillis());
     }
@@ -139,5 +139,6 @@ public class TaskNotificationService {
     }
 
     // Notification data record
-    private record TaskNotification(String subject, String body, Long taskId) {}
+    private record TaskNotification(String subject, String body, Long taskId) {
+    }
 }

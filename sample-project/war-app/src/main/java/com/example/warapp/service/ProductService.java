@@ -2,6 +2,7 @@ package com.example.warapp.service;
 
 import com.example.warapp.dao.ProductDao;
 import com.example.warapp.model.Product;
+
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ public class ProductService {
         this.productDao = new ProductDao();
         this.validationService = new ProductValidationService();
         this.cacheService = new ProductCacheService();
-        
+
         // Level 5: Service initialization
         initializeService();
     }
@@ -29,16 +30,16 @@ public class ProductService {
      */
     public List<Product> findAllProducts() {
         System.out.println("Service: Finding all products");
-        
+
         // Level 5: DAO call
         List<Product> products = productDao.findAll();
-        
+
         // Level 5: Post-processing
         enrichProductList(products);
-        
+
         // Level 5: Cache update
         cacheService.updateCache(products);
-        
+
         return products;
     }
 
@@ -47,27 +48,27 @@ public class ProductService {
      */
     public Product findProductById(Long id) {
         System.out.println("Service: Finding product by ID: " + id);
-        
+
         // Level 5: Validation
         validationService.validateProductId(id);
-        
+
         // Level 5: Check cache first  
         Product cachedProduct = cacheService.getFromCache(id);
         if (cachedProduct != null) {
             return cachedProduct;
         }
-        
+
         // Level 5: DAO call
         Product product = productDao.findById(id);
-        
+
         if (product != null) {
             // Level 5: Enrich product data
             enrichProductData(product);
-            
+
             // Level 5: Update cache
             cacheService.putInCache(product);
         }
-        
+
         return product;
     }
 
@@ -76,22 +77,22 @@ public class ProductService {
      */
     public Product createProduct(Product product) {
         System.out.println("Service: Creating new product: " + product.getName());
-        
+
         // Level 5: Validation
         validationService.validateProduct(product);
-        
+
         // Level 5: Pre-creation processing
         preprocessForCreation(product);
-        
+
         // Level 5: DAO call
         Product createdProduct = productDao.save(product);
-        
+
         // Level 5: Post-creation processing
         postprocessAfterCreation(createdProduct);
-        
+
         // Level 5: Cache update
         cacheService.putInCache(createdProduct);
-        
+
         return createdProduct;
     }
 
@@ -100,25 +101,25 @@ public class ProductService {
      */
     public Product updateProduct(Product product) {
         System.out.println("Service: Updating product: " + product.getId());
-        
+
         // Level 5: Validation
         validationService.validateProduct(product);
         validationService.validateProductExists(product.getId());
-        
+
         // Level 5: Pre-update processing
         preprocessForUpdate(product);
-        
+
         // Level 5: DAO call
         Product updatedProduct = productDao.update(product);
-        
+
         if (updatedProduct != null) {
             // Level 5: Post-update processing
             postprocessAfterUpdate(updatedProduct);
-            
+
             // Level 5: Cache update
             cacheService.updateCacheEntry(updatedProduct);
         }
-        
+
         return updatedProduct;
     }
 
@@ -127,30 +128,30 @@ public class ProductService {
      */
     public boolean deleteProduct(Long id) {
         System.out.println("Service: Deleting product ID: " + id);
-        
+
         // Level 5: Validation
         validationService.validateProductId(id);
         validationService.validateProductExists(id);
-        
+
         // Level 5: Check for dependencies
         if (hasDependentData(id)) {
             throw new IllegalStateException("Cannot delete product with dependent data");
         }
-        
+
         // Level 5: Pre-deletion processing
         preprocessForDeletion(id);
-        
+
         // Level 5: DAO call
         boolean deleted = productDao.deleteById(id);
-        
+
         if (deleted) {
             // Level 5: Post-deletion cleanup
             cleanupAfterDeletion(id);
-            
+
             // Level 5: Cache removal
             cacheService.removeFromCache(id);
         }
-        
+
         return deleted;
     }
 
@@ -159,7 +160,7 @@ public class ProductService {
      */
     public int getProductCount() {
         System.out.println("Service: Getting product count");
-        
+
         // Level 5: DAO call
         return productDao.count();
     }
@@ -169,16 +170,16 @@ public class ProductService {
      */
     public List<Product> findProductsByCategory(String category) {
         System.out.println("Service: Finding products by category: " + category);
-        
+
         // Level 5: Validation
         validationService.validateCategory(category);
-        
+
         // Level 5: DAO call
         List<Product> products = productDao.findByCategory(category);
-        
+
         // Level 5: Post-processing
         enrichProductList(products);
-        
+
         return products;
     }
 
@@ -189,10 +190,10 @@ public class ProductService {
      */
     private void initializeService() {
         System.out.println("Service: Initializing ProductService");
-        
+
         // Level 6: Service setup
         setupServiceConfiguration();
-        
+
         // Level 6: Initialize connections
         initializeConnections();
     }
@@ -202,12 +203,12 @@ public class ProductService {
      */
     private void enrichProductList(List<Product> products) {
         System.out.println("Service: Enriching product list");
-        
+
         for (Product product : products) {
             // Level 6: Individual enrichment
             enrichProductData(product);
         }
-        
+
         // Level 6: List-level processing
         sortProductList(products);
     }
@@ -217,10 +218,10 @@ public class ProductService {
      */
     private void enrichProductData(Product product) {
         System.out.println("Service: Enriching product data for ID: " + product.getId());
-        
+
         // Level 6: Add computed fields
         addComputedFields(product);
-        
+
         // Level 6: Add metadata
         addProductMetadata(product);
     }
@@ -230,10 +231,10 @@ public class ProductService {
      */
     private void preprocessForCreation(Product product) {
         System.out.println("Service: Preprocessing for creation");
-        
+
         // Level 6: Set default values
         setDefaultValues(product);
-        
+
         // Level 6: Generate identifiers
         generateProductIdentifiers(product);
     }
@@ -243,10 +244,10 @@ public class ProductService {
      */
     private void postprocessAfterCreation(Product product) {
         System.out.println("Service: Postprocessing after creation");
-        
+
         // Level 6: Trigger events
         triggerCreatedEvent(product);
-        
+
         // Level 6: Update indices
         updateSearchIndices(product);
     }
@@ -256,10 +257,10 @@ public class ProductService {
      */
     private void preprocessForUpdate(Product product) {
         System.out.println("Service: Preprocessing for update");
-        
+
         // Level 6: Preserve certain fields
         preserveImmutableFields(product);
-        
+
         // Level 6: Update timestamps
         updateModificationTimestamp(product);
     }
@@ -269,10 +270,10 @@ public class ProductService {
      */
     private void postprocessAfterUpdate(Product product) {
         System.out.println("Service: Postprocessing after update");
-        
+
         // Level 6: Trigger events
         triggerUpdatedEvent(product);
-        
+
         // Level 6: Update indices
         updateSearchIndices(product);
     }
@@ -282,7 +283,7 @@ public class ProductService {
      */
     private boolean hasDependentData(Long productId) {
         System.out.println("Service: Checking for dependent data");
-        
+
         // Level 6: Check various dependencies
         return checkOrderDependencies(productId) || checkInventoryDependencies(productId);
     }
@@ -292,10 +293,10 @@ public class ProductService {
      */
     private void preprocessForDeletion(Long id) {
         System.out.println("Service: Preprocessing for deletion");
-        
+
         // Level 6: Archive data
         archiveProductData(id);
-        
+
         // Level 6: Notify dependent systems
         notifyDependentSystems(id);
     }
@@ -305,10 +306,10 @@ public class ProductService {
      */
     private void cleanupAfterDeletion(Long id) {
         System.out.println("Service: Cleaning up after deletion");
-        
+
         // Level 6: Remove related data
         removeRelatedData(id);
-        
+
         // Level 6: Update indices
         removeFromSearchIndices(id);
     }

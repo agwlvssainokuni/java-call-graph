@@ -11,10 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * Spring Boot CLI Application for file processing.
  * Demonstrates call graph analysis with layered architecture.
- * 
+ * <p>
  * Call hierarchy levels:
  * 1. CliApplication.main()
- * 2. CliApplication.run() 
+ * 2. CliApplication.run()
  * 3. FileProcessorCli.processFiles()
  * 4. FileProcessingService methods
  * 5. FileRepository methods
@@ -32,22 +32,22 @@ public class CliApplication implements ApplicationRunner, ExitCodeGenerator {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         System.out.println("=== File Processing CLI Application ===");
-        
+
         if (args.getNonOptionArgs().isEmpty()) {
             System.out.println("Usage: java -jar cli-app.jar <file-path> [<file-path>...]");
             System.out.println("Processes files and demonstrates call graph analysis.");
             exitCode = 1;
             return;
         }
-        
+
         try {
             // Level 2: Call to CLI handler
             FileProcessorCli fileProcessorCli = new FileProcessorCli();
-            
+
             for (String filePath : args.getNonOptionArgs()) {
                 fileProcessorCli.processFile(filePath);
             }
-            
+
             System.out.println("File processing completed successfully.");
         } catch (Exception e) {
             System.err.println("Error processing files: " + e.getMessage());

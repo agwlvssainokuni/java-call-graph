@@ -13,13 +13,13 @@ public class ProductValidationService {
      */
     public void validateProduct(Product product) {
         System.out.println("Validation: Validating product");
-        
+
         // Level 6: Individual field validations
         validateProductName(product.getName());
         validateProductPrice(product.getPrice());
         validateProductQuantity(product.getQuantity());
         validateProductCategory(product.getCategory());
-        
+
         // Level 6: Business rule validations
         validateBusinessRules(product);
     }
@@ -29,7 +29,7 @@ public class ProductValidationService {
      */
     public void validateProductId(Long id) {
         System.out.println("Validation: Validating product ID");
-        
+
         // Level 6: ID validation
         checkIdFormat(id);
         checkIdRange(id);
@@ -40,7 +40,7 @@ public class ProductValidationService {
      */
     public void validateProductExists(Long id) {
         System.out.println("Validation: Validating product exists");
-        
+
         // Level 6: Existence check
         checkProductExistence(id);
     }
@@ -50,7 +50,7 @@ public class ProductValidationService {
      */
     public void validateCategory(String category) {
         System.out.println("Validation: Validating category");
-        
+
         // Level 6: Category validation
         checkCategoryFormat(category);
         checkCategoryExists(category);
@@ -63,15 +63,15 @@ public class ProductValidationService {
      */
     private void validateProductName(String name) {
         System.out.println("Validation: Validating product name");
-        
+
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Product name cannot be empty");
         }
-        
+
         if (name.length() > 100) {
             throw new IllegalArgumentException("Product name too long");
         }
-        
+
         // Level 7: Character validation
         validateNameCharacters(name);
     }
@@ -81,15 +81,15 @@ public class ProductValidationService {
      */
     private void validateProductPrice(Double price) {
         System.out.println("Validation: Validating product price");
-        
+
         if (price == null || price <= 0) {
             throw new IllegalArgumentException("Product price must be positive");
         }
-        
+
         if (price > 999999.99) {
             throw new IllegalArgumentException("Product price too high");
         }
-        
+
         // Level 7: Precision validation
         validatePricePrecision(price);
     }
@@ -99,11 +99,11 @@ public class ProductValidationService {
      */
     private void validateProductQuantity(Integer quantity) {
         System.out.println("Validation: Validating product quantity");
-        
+
         if (quantity == null || quantity < 0) {
             throw new IllegalArgumentException("Product quantity cannot be negative");
         }
-        
+
         if (quantity > 999999) {
             throw new IllegalArgumentException("Product quantity too high");
         }
@@ -114,11 +114,11 @@ public class ProductValidationService {
      */
     private void validateProductCategory(String category) {
         System.out.println("Validation: Validating product category");
-        
+
         if (category == null || category.trim().isEmpty()) {
             throw new IllegalArgumentException("Product category cannot be empty");
         }
-        
+
         // Level 7: Category format validation
         checkCategoryFormat(category);
     }
@@ -128,7 +128,7 @@ public class ProductValidationService {
      */
     private void validateBusinessRules(Product product) {
         System.out.println("Validation: Validating business rules");
-        
+
         // Level 7: Specific business rule checks
         checkPriceCategoryRules(product.getPrice(), product.getCategory());
         checkQuantityPriceRules(product.getQuantity(), product.getPrice());
@@ -139,11 +139,11 @@ public class ProductValidationService {
      */
     private void checkIdFormat(Long id) {
         System.out.println("Validation: Checking ID format");
-        
+
         if (id == null) {
             throw new IllegalArgumentException("Product ID cannot be null");
         }
-        
+
         // Level 7: Format validation
         validateIdFormat(id);
     }
@@ -153,11 +153,11 @@ public class ProductValidationService {
      */
     private void checkIdRange(Long id) {
         System.out.println("Validation: Checking ID range");
-        
+
         if (id <= 0) {
             throw new IllegalArgumentException("Product ID must be positive");
         }
-        
+
         // Level 7: Range validation
         validateIdRange(id);
     }
@@ -167,7 +167,7 @@ public class ProductValidationService {
      */
     private void checkProductExistence(Long id) {
         System.out.println("Validation: Checking product existence");
-        
+
         // Level 7: Existence verification
         verifyProductExists(id);
     }
@@ -177,11 +177,11 @@ public class ProductValidationService {
      */
     private void checkCategoryFormat(String category) {
         System.out.println("Validation: Checking category format");
-        
+
         if (category.length() > 50) {
             throw new IllegalArgumentException("Category name too long");
         }
-        
+
         // Level 7: Format checks
         validateCategoryCharacters(category);
     }
@@ -191,7 +191,7 @@ public class ProductValidationService {
      */
     private void checkCategoryExists(String category) {
         System.out.println("Validation: Checking category exists");
-        
+
         // Level 7: Category existence validation
         verifyCategoryExists(category);
     }
