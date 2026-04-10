@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Java call graph analysis CLI application built with Spring Boot 3.5.4 and SootUp 2.0.0. The project provides sophisticated static analysis capabilities to extract and visualize call graphs from Java applications.
+Java call graph analysis CLI application built with Spring Boot 4.0.5 and SootUp 2.0.0. The project provides sophisticated static analysis capabilities to extract and visualize call graphs from Java applications.
 
 ## Features
 
@@ -18,7 +18,7 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and SootUp
 
 ## Architecture
 
-**Framework**: Spring Boot 3.5.4 CLI application
+**Framework**: Spring Boot 4.0.5 CLI application
 - Entry point: `cherry.callgraph.Main` class with Spring Boot context management
 - CLI pattern: Uses `ApplicationRunner` and `ExitCodeGenerator` for proper CLI behavior
 - Package structure: `cherry.callgraph` as base package with modular sub-packages
@@ -37,7 +37,7 @@ Java call graph analysis CLI application built with Spring Boot 3.5.4 and SootUp
 
 ## Build System
 
-**Gradle 8.14.3** with Gradle Wrapper
+**Gradle 9.4.1** with Gradle Wrapper
 - Plugin: `java-library` (not application plugin)
 - Spring Boot BOM for dependency management
 - Java 21 toolchain with UTF-8 encoding

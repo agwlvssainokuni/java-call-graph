@@ -1,9 +1,9 @@
 # Java Call Graph Analysis Tool
 
 [![Java Version](https://img.shields.io/badge/Java-21-orange)](https://openjdk.java.net/projects/jdk/21/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.4-brightgreen)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.5-brightgreen)](https://spring.io/projects/spring-boot)
 [![SootUp](https://img.shields.io/badge/SootUp-2.0.0-blue)](https://github.com/soot-oss/SootUp)
-[![Gradle](https://img.shields.io/badge/Gradle-8.14.3-brightgreen)](https://gradle.org/)
+[![Gradle](https://img.shields.io/badge/Gradle-9.4.1-brightgreen)](https://gradle.org/)
 
 A sophisticated command-line tool for static call graph analysis of Java applications using SootUp 2.0.0 framework and Spring Boot.
 
@@ -23,7 +23,7 @@ A sophisticated command-line tool for static call graph analysis of Java applica
 ### Prerequisites
 
 - Java 21 or higher
-- Gradle 8.14.3 or higher (included via Gradle Wrapper)
+- Gradle 9.4.1 or higher (included via Gradle Wrapper)
 
 ### Build and Run
 
@@ -248,14 +248,14 @@ Example combinations:
 
 ## Build System
 
-- **Gradle 8.14.3** with Gradle Wrapper
+- **Gradle 9.4.1** with Gradle Wrapper
 - **Java 21** toolchain with UTF-8 encoding
 - **Spring Boot BOM** for dependency management
 - **Code Quality**: Deprecation warnings and unchecked operation warnings enabled
 
 ## Dependencies
 
-- **Spring Boot 3.5.4**: Core framework and CLI infrastructure
+- **Spring Boot 4.0.5**: Core framework and CLI infrastructure
 - **SootUp 2.0.0**: Static analysis engine
   - `sootup.core`: Core analysis functionality
   - `sootup.java.core`: Java-specific classes

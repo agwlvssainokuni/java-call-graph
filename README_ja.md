@@ -1,9 +1,9 @@
 # Java コールグラフ解析ツール
 
 [![Java Version](https://img.shields.io/badge/Java-21-orange)](https://openjdk.java.net/projects/jdk/21/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.4-brightgreen)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.5-brightgreen)](https://spring.io/projects/spring-boot)
 [![SootUp](https://img.shields.io/badge/SootUp-2.0.0-blue)](https://github.com/soot-oss/SootUp)
-[![Gradle](https://img.shields.io/badge/Gradle-8.14.3-brightgreen)](https://gradle.org/)
+[![Gradle](https://img.shields.io/badge/Gradle-9.4.1-brightgreen)](https://gradle.org/)
 
 SootUp 2.0.0フレームワークとSpring Bootを使用したJavaアプリケーションの静的コールグラフ解析のための高機能コマンドラインツールです。
 
@@ -23,7 +23,7 @@ SootUp 2.0.0フレームワークとSpring Bootを使用したJavaアプリケ�
 ### 前提条件
 
 - Java 21以上
-- Gradle 8.14.3以上（Gradle Wrapperが含まれています）
+- Gradle 9.4.1以上（Gradle Wrapperが含まれています）
 
 ### ビルドと実行
 
@@ -248,14 +248,14 @@ digraph CallGraph {
 
 ## ビルドシステム
 
-- **Gradle 8.14.3** Gradle Wrapper付き
+- **Gradle 9.4.1** Gradle Wrapper付き
 - **Java 21** UTF-8エンコーディング付きツールチェーン
 - **Spring Boot BOM** 依存関係管理用
 - **コード品質**: 非推奨警告と未チェック操作警告を有効化
 
 ## 依存関係
 
-- **Spring Boot 3.5.4**: コアフレームワークとCLIインフラ
+- **Spring Boot 4.0.5**: コアフレームワークとCLIインフラ
 - **SootUp 2.0.0**: 静的解析エンジン
   - `sootup.core`: コア解析機能
   - `sootup.java.core`: Java固有のクラス
