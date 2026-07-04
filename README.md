@@ -22,8 +22,8 @@ A sophisticated command-line tool for static call graph analysis of Java applica
 
 ### Prerequisites
 
-- Java 21 or higher
-- Gradle 9.4.1 or higher (included via Gradle Wrapper)
+- Java 25 or higher
+- Gradle 9.6.1 or higher (included via Gradle Wrapper)
 
 ### Build and Run
 
@@ -248,8 +248,8 @@ Example combinations:
 
 ## Build System
 
-- **Gradle 9.4.1** with Gradle Wrapper
-- **Java 21** toolchain with UTF-8 encoding
+- **Gradle 9.6.1** with Gradle Wrapper
+- **Java 25** toolchain with UTF-8 encoding
 - **Spring Boot BOM** for dependency management
 - **Code Quality**: Deprecation warnings and unchecked operation warnings enabled
 
@@ -289,7 +289,7 @@ Test the tool on itself:
 
 ## Code Quality Standards
 
-- Java 21 language features (records, switch expressions, var)
+- Java 25 language features (records, switch expressions, var)
 - Modern SootUp APIs (2.0.0 compatible methods)
 - Stream API and functional programming style preferred over imperative loops
 - Proper resource management with try-with-resources

@@ -22,8 +22,8 @@ SootUp 2.0.0フレームワークとSpring Bootを使用したJavaアプリケ�
 
 ### 前提条件
 
-- Java 21以上
-- Gradle 9.4.1以上（Gradle Wrapperが含まれています）
+- Java 25以上
+- Gradle 9.6.1以上（Gradle Wrapperが含まれています）
 
 ### ビルドと実行
 
@@ -248,8 +248,8 @@ digraph CallGraph {
 
 ## ビルドシステム
 
-- **Gradle 9.4.1** Gradle Wrapper付き
-- **Java 21** UTF-8エンコーディング付きツールチェーン
+- **Gradle 9.6.1** Gradle Wrapper付き
+- **Java 25** UTF-8エンコーディング付きツールチェーン
 - **Spring Boot BOM** 依存関係管理用
 - **コード品質**: 非推奨警告と未チェック操作警告を有効化
 
@@ -289,7 +289,7 @@ digraph CallGraph {
 
 ## コード品質基準
 
-- Java 21言語機能（レコード、switch式、var）
+- Java 25言語機能（レコード、switch式、var）
 - モダンなSootUp API（2.0.0互換メソッド）
 - 命令型ループよりもStream APIと関数型プログラミングスタイルを優先
 - try-with-resourcesによる適切なリソース管理

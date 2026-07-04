@@ -1,3 +1,4 @@
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -37,11 +38,12 @@ Java call graph analysis CLI application built with Spring Boot 4.0.5 and SootUp
 
 ## Build System
 
-**Gradle 9.4.1** with Gradle Wrapper
+**Gradle 9.6.1** with Gradle Wrapper
 - Plugin: `java-library` (not application plugin)
 - Spring Boot BOM for dependency management
-- Java 21 toolchain with UTF-8 encoding
+- Java 25 toolchain with UTF-8 encoding
 - Deprecation warnings enabled for code quality
+- ASM pinned to 9.9 via `dependencyManagement` (overrides the 9.7.1 bundled by SootUp 2.0.0), since 9.7.1 cannot parse Java 25 class files (major version 69) and silently drops them during analysis
 
 ## Source Structure
 
@@ -175,7 +177,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 ## Code Quality Standards
 
-- Java 21 language features (records, switch expressions, var)
+- Java 25 language features (records, switch expressions, var)
 - Modern SootUp APIs (2.0.0 compatible methods)
 - Stream API and functional programming style preferred over imperative loops
 - Proper resource management with try-with-resources
