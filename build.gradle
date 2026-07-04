@@ -6,10 +6,10 @@ plugins {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 springBoot {
@@ -38,6 +38,13 @@ dependencyManagement {
         dependency 'org.soot-oss:sootup.java.core:2.0.0'
         dependency 'org.soot-oss:sootup.java.bytecode.frontend:2.0.0'
         dependency 'org.soot-oss:sootup.callgraph:2.0.0'
+        // SootUp 2.0.0 bundles ASM 9.7.1, which can't parse Java 25 class files
+        // (major version 69) and silently drops them during analysis.
+        dependency 'org.ow2.asm:asm:9.9'
+        dependency 'org.ow2.asm:asm-tree:9.9'
+        dependency 'org.ow2.asm:asm-commons:9.9'
+        dependency 'org.ow2.asm:asm-util:9.9'
+        dependency 'org.ow2.asm:asm-analysis:9.9'
     }
 }
 
