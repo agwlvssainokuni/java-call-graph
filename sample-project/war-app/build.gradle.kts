@@ -1,0 +1,44 @@
+plugins {
+    java
+    war
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Servlet API
+    compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
+
+    // JSON processing
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.2")
+
+    // Database (H2 for simplicity)
+    implementation("com.h2database:h2:2.4.240")
+
+    // JDBC Template (lightweight alternative to full framework)
+    implementation("org.springframework:spring-jdbc:7.0.9")
+    implementation("org.springframework:spring-context:7.0.9")
+
+    // Test dependencies
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.23.0")
+}
+
+tasks.war {
+    archiveBaseName = "war-app"
+    archiveVersion = "1.0.0"
+}
