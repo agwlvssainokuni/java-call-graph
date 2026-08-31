@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Java call graph analysis CLI application built with Spring Boot 4.0.5 and SootUp 2.0.0. The project provides sophisticated static analysis capabilities to extract and visualize call graphs from Java applications.
+Java call graph analysis CLI application built with Spring Boot 4.1.1 and SootUp 3.0.1. The project provides sophisticated static analysis capabilities to extract and visualize call graphs from Java applications.
 
 ## Features
 
@@ -19,7 +19,7 @@ Java call graph analysis CLI application built with Spring Boot 4.0.5 and SootUp
 
 ## Architecture
 
-**Framework**: Spring Boot 4.0.5 CLI application
+**Framework**: Spring Boot 4.1.1 CLI application
 - Entry point: `cherry.callgraph.Main` class with Spring Boot context management
 - CLI pattern: Uses `ApplicationRunner` and `ExitCodeGenerator` for proper CLI behavior
 - Package structure: `cherry.callgraph` as base package with modular sub-packages
@@ -30,7 +30,7 @@ Java call graph analysis CLI application built with Spring Boot 4.0.5 and SootUp
 - `cherry.callgraph.sootup`: SootUp-specific implementation
 - Dependency injection: Spring Boot manages interface-to-implementation binding
 
-**Analysis Engine**: SootUp 2.0.0 integration
+**Analysis Engine**: SootUp 3.0.1 integration
 - Static analysis: Multiple algorithms (CHA, RTA) for call graph construction
 - Interface resolution: Automatic interface implementation detection for Spring DI patterns
 - Scope management: Proper SootUp view configuration with input locations
@@ -38,12 +38,12 @@ Java call graph analysis CLI application built with Spring Boot 4.0.5 and SootUp
 
 ## Build System
 
-**Gradle 9.6.1** with Gradle Wrapper
+**Gradle 9.7.1** with Gradle Wrapper
 - Plugin: `java-library` (not application plugin)
 - Spring Boot BOM for dependency management
 - Java 25 toolchain with UTF-8 encoding
 - Deprecation warnings enabled for code quality
-- ASM pinned to 9.9 via `dependencyManagement` (overrides the 9.7.1 bundled by SootUp 2.0.0), since 9.7.1 cannot parse Java 25 class files (major version 69) and silently drops them during analysis
+- SootUp 3.0.1 bundles ASM 9.10.1, which parses Java 25 class files (major version 69) natively, so no ASM version override is needed
 
 ## Source Structure
 
@@ -219,7 +219,7 @@ Example usage:
 
 **COMPLETED Features:**
 - Core call graph analysis with multiple algorithms (CHA, RTA)
-- SootUp 2.0.0 integration with automatic interface call resolution
+- SootUp 3.0.1 integration with automatic interface call resolution
 - Interface-based architecture with clean separation of analysis interface and SootUp implementation
 - Package filtering and FQCN-based class exclusion (`--exclude=<class>`)
 - Custom entry point specification

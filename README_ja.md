@@ -5,12 +5,12 @@
 [![SootUp](https://img.shields.io/badge/SootUp-2.0.0-blue)](https://github.com/soot-oss/SootUp)
 [![Gradle](https://img.shields.io/badge/Gradle-9.4.1-brightgreen)](https://gradle.org/)
 
-SootUp 2.0.0フレームワークとSpring Bootを使用したJavaアプリケーションの静的コールグラフ解析のための高機能コマンドラインツールです。
+SootUp 3.0.1フレームワークとSpring Bootを使用したJavaアプリケーションの静的コールグラフ解析のための高機能コマンドラインツールです。
 
 ## 機能
 
 - **複数の解析アルゴリズム**: CHA（クラス階層解析）とRTA（高速型解析）
-- **自動インタフェース解決**: SootUp 2.0.0がインタフェース呼び出しを自動的に処理
+- **自動インタフェース解決**: SootUp 3.0.1がインタフェース呼び出しを自動的に処理
 - **柔軟なフィルタリング**: FQCNベースのクラス包含と除外
 - **カスタムエントリポイント**: 解析開始点としてカスタムメソッドを指定可能
 - **柔軟な入力サポート**: JARファイル、クラスファイル、ディレクトリ
@@ -23,7 +23,7 @@ SootUp 2.0.0フレームワークとSpring Bootを使用したJavaアプリケ�
 ### 前提条件
 
 - Java 25以上
-- Gradle 9.6.1以上（Gradle Wrapperが含まれています）
+- Gradle 9.7.1以上（Gradle Wrapperが含まれています）
 
 ### ビルドと実行
 
@@ -148,7 +148,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 ### 解析エンジン
 
-SootUp 2.0.0上に構築された高機能な機能:
+SootUp 3.0.1上に構築された高機能な機能:
 
 - **静的解析**: 精度/パフォーマンスのトレードオフに応じた複数のアルゴリズム
 - **インタフェース解決**: SootUpがインタフェース呼び出しを自動処理（手動拡張不要）
@@ -248,15 +248,15 @@ digraph CallGraph {
 
 ## ビルドシステム
 
-- **Gradle 9.6.1** Gradle Wrapper付き
+- **Gradle 9.7.1** Gradle Wrapper付き
 - **Java 25** UTF-8エンコーディング付きツールチェーン
 - **Spring Boot BOM** 依存関係管理用
 - **コード品質**: 非推奨警告と未チェック操作警告を有効化
 
 ## 依存関係
 
-- **Spring Boot 4.0.5**: コアフレームワークとCLIインフラ
-- **SootUp 2.0.0**: 静的解析エンジン
+- **Spring Boot 4.1.1**: コアフレームワークとCLIインフラ
+- **SootUp 3.0.1**: 静的解析エンジン
   - `sootup.core`: コア解析機能
   - `sootup.java.core`: Java固有のクラス
   - `sootup.java.bytecode.frontend`: バイトコードフロントエンド

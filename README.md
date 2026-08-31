@@ -5,12 +5,12 @@
 [![SootUp](https://img.shields.io/badge/SootUp-2.0.0-blue)](https://github.com/soot-oss/SootUp)
 [![Gradle](https://img.shields.io/badge/Gradle-9.4.1-brightgreen)](https://gradle.org/)
 
-A sophisticated command-line tool for static call graph analysis of Java applications using SootUp 2.0.0 framework and Spring Boot.
+A sophisticated command-line tool for static call graph analysis of Java applications using SootUp 3.0.1 framework and Spring Boot.
 
 ## Features
 
 - **Multiple Analysis Algorithms**: CHA (Class Hierarchy Analysis) and RTA (Rapid Type Analysis)
-- **Automatic Interface Resolution**: SootUp 2.0.0 handles interface calls automatically
+- **Automatic Interface Resolution**: SootUp 3.0.1 handles interface calls automatically
 - **Flexible Filtering**: FQCN-based class inclusion and exclusion
 - **Custom Entry Points**: Support for specifying custom methods as analysis starting points
 - **Flexible Input Support**: JAR files, class files, and directories
@@ -23,7 +23,7 @@ A sophisticated command-line tool for static call graph analysis of Java applica
 ### Prerequisites
 
 - Java 25 or higher
-- Gradle 9.6.1 or higher (included via Gradle Wrapper)
+- Gradle 9.7.1 or higher (included via Gradle Wrapper)
 
 ### Build and Run
 
@@ -148,7 +148,7 @@ dot -Tpng callgraph.dot -o callgraph.png
 
 ### Analysis Engine
 
-Built on SootUp 2.0.0 with sophisticated features:
+Built on SootUp 3.0.1 with sophisticated features:
 
 - **Static Analysis**: Multiple algorithms for different precision/performance trade-offs
 - **Interface Resolution**: SootUp automatically handles interface calls (no manual expansion needed)
@@ -248,15 +248,15 @@ Example combinations:
 
 ## Build System
 
-- **Gradle 9.6.1** with Gradle Wrapper
+- **Gradle 9.7.1** with Gradle Wrapper
 - **Java 25** toolchain with UTF-8 encoding
 - **Spring Boot BOM** for dependency management
 - **Code Quality**: Deprecation warnings and unchecked operation warnings enabled
 
 ## Dependencies
 
-- **Spring Boot 4.0.5**: Core framework and CLI infrastructure
-- **SootUp 2.0.0**: Static analysis engine
+- **Spring Boot 4.1.1**: Core framework and CLI infrastructure
+- **SootUp 3.0.1**: Static analysis engine
   - `sootup.core`: Core analysis functionality
   - `sootup.java.core`: Java-specific classes
   - `sootup.java.bytecode.frontend`: Bytecode frontend
