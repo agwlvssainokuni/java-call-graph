@@ -261,20 +261,20 @@ public class SootUpAnalyzer implements CallGraphAnalyzer {
         callGraph.getMethodSignatures().forEach(methodSignature ->
                 callGraph.callsFrom(methodSignature).stream()
                         .filter(call -> {
-                            MethodSignature source = call.getSourceMethodSignature();
+                            MethodSignature source = call.sourceMethodSignature();
                             String sourceClass = source.getDeclClassType().getFullyQualifiedName();
                             return !(excludeJdk && isJdkClass(sourceClass)) &&
                                     matchesClassFilter(sourceClass, includeClasses, excludeClasses);
                         })
                         .filter(call -> {
-                            MethodSignature target = call.getTargetMethodSignature();
+                            MethodSignature target = call.targetMethodSignature();
                             String targetClass = target.getDeclClassType().getFullyQualifiedName();
                             return !(excludeJdk && isJdkClass(targetClass)) &&
                                     matchesClassFilter(targetClass, includeClasses, excludeClasses);
                         })
                         .forEach(call -> {
-                            MethodSignature source = call.getSourceMethodSignature();
-                            MethodSignature target = call.getTargetMethodSignature();
+                            MethodSignature source = call.sourceMethodSignature();
+                            MethodSignature target = call.targetMethodSignature();
 
                             String sourceClass = source.getDeclClassType().getFullyQualifiedName();
                             String sourceMethod = source.getName();
